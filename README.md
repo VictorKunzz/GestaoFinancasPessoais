@@ -24,7 +24,7 @@ Ajudar o usuário a controlar sua vida financeira de forma visual, simples e at�
 
 ##  Funcionalidades Diferenciadas
 
-O sistema também conta com ideias mais modernas:
+O sistema também conta com ideias diferentes do usual:
 
 ###  Score de saúde financeira
 Um número de 0 a 100 que mostra o quão saudável estão suas finanças.
