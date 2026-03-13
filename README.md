@@ -31,7 +31,7 @@ Ajudar o usuário a controlar sua vida financeira de forma visual, simples e int
 | RF13 | Gamificação com medalhas por conquistas | Baixa |
 | RF14 | Criação de categorias personalizadas | Baixa |
 
-## 📋 Requisitos Não-Funcionais
+## Requisitos Não-Funcionais
 
 | ID | Requisito | Tipo |
 |---|---|---|
