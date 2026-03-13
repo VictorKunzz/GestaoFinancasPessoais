@@ -1,0 +1,83 @@
+// Documentação do Prisma Schema: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Tabela de usuários
+model User {
+  id           String        @id @default(uuid())
+  name         String
+  email        String        @unique
+  passwordHash String
+  createdAt    DateTime      @default(now())
+  transactions Transaction[]
+  goals        Goal[]
+  badges       UserBadge[]
+}
+
+// Tabela de categorias (alimentação, transporte, lazer, etc)
+model Category {
+  id           String        @id @default(uuid())
+  name         String        @unique
+  icon         String?
+  isDefault    Boolean       @default(false)
+  transactions Transaction[]
+}
+
+// Tipo da transação: receita ou despesa
+enum TransactionType {
+  INCOME
+  EXPENSE
+}
+
+// Tabela de transações financeiras (receitas e despesas)
+model Transaction {
+  id          String          @id @default(uuid())
+  userId      String
+  categoryId  String
+  type        TransactionType
+  description String
+  amount      Decimal
+  date        DateTime
+  createdAt   DateTime        @default(now())
+  user        User            @relation(fields: [userId], references: [id])
+  category    Category        @relation(fields: [categoryId], references: [id])
+}
+
+// Tabela de metas financeiras
+model Goal {
+  id           String    @id @default(uuid())
+  userId       String
+  name         String
+  targetAmount Decimal
+  savedAmount  Decimal   @default(0)
+  deadline     DateTime?
+  createdAt    DateTime  @default(now())
+  user         User      @relation(fields: [userId], references: [id])
+}
+
+// Tabela de medalhas disponíveis no sistema
+model Badge {
+  id          String      @id @default(uuid())
+  name        String
+  description String
+  icon        String?
+  condition   String      // ex: "first_transaction", "goal_reached"
+  userBadges  UserBadge[]
+}
+
+// Tabela que liga usuário às medalhas que ele conquistou
+model UserBadge {
+  id       String   @id @default(uuid())
+  userId   String
+  badgeId  String
+  earnedAt DateTime @default(now())
+  user     User     @relation(fields: [userId], references: [id])
+  badge    Badge    @relation(fields: [badgeId], references: [id])
+}
