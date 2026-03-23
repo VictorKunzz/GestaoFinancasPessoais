@@ -1,0 +1,15 @@
+@startuml C4_Context
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+title Sistema de Gestão de Finanças Pessoais - Diagrama de Contexto (Nível 1)
+
+' Atores
+Person(usuario, "Usuário", "Pessoa que deseja controlar sua vida financeira e acompanhar seu patrimônio.")
+
+' Sistemas
+System(sistema_gestao, "Sistema de Gestão de Finanças Pessoais", "Plataforma central que gerencia orçamentos, controla fluxo de caixa, gera insights preditivos e avalia a saúde financeira do usuário.")
+
+' Relacionamentos
+Rel(usuario, sistema_gestao, "Cadastra transações, monitora a evolução do patrimônio, estipula metas e acompanha alertas inteligentes e previsão de saldos.", "Navegador Web")
+
+@enduml

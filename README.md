@@ -82,75 +82,12 @@ Pequenos incentivos como medalhas, metas atingidas e evolução mês a mês.
 
 ## Arquitetura (Modelo C4)
 
-### Nível 1 — Contexto
+Os diagramas arquiteturais do sistema foram construídos utilizando o **Modelo C4** e a linguagem **PlantUML**.
+Eles detalham os níveis de Contexto, Container, Componentes e o Diagrama de Entidade-Relacionamento do banco de dados.
 
-O **Usuário** interage com o **Sistema de Gestão de Finanças Pessoais** via navegador web. O sistema é autossuficiente — não depende de sistemas externos (bancos, APIs de terceiros).
+Todos os diagramas podem ser consultados no diretório [`docs/c4-model/`](./docs/c4-model/).
 
-```
-┌──────────┐        HTTPS        ┌─────────────────────────────────┐
-│  Usuário │ ──────────────────> │ Sistema de Gestão de Finanças   │
-│          │                     │ Pessoais                        │
-└──────────┘                     └─────────────────────────────────┘
-```
-
-### Nível 2 — Container
-
-O sistema é dividido em 3 containers:
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│               Sistema de Gestão de Finanças Pessoais            │
-│                                                                 │
-│  ┌──────────────────┐   HTTP/JSON   ┌────────────────────────┐  │
-│  │ Frontend SPA     │ ────────────> │ API REST               │  │
-│  │ React + Vite     │               │ Node.js + Express + TS │  │
-│  │ TailwindCSS      │               │ Porta 3000             │  │
-│  │ Porta 5173       │               └──────────┬─────────────┘  │
-│  └──────────────────┘                          │ Prisma ORM     │
-│                                       ┌────────▼──────────┐     │
-│                                       │ PostgreSQL        │     │
-│                                       │ Banco de Dados    │     │
-│                                       └───────────────────┘     │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-| Container | Tecnologia | Responsabilidade |
-|---|---|---|
-| **Frontend SPA** | React 18 + Vite + TailwindCSS v3 | Interface visual, gráficos, formulários |
-| **API REST** | Node.js + Express + TypeScript | Regras de negócio, autenticação, analytics |
-| **Banco de Dados** | PostgreSQL | Persistência de dados |
-
-### Nível 3 — Componente (Backend)
-
-A API é organizada em camadas:
-
-- **Controllers** — Recebem as requisições HTTP e delegam para os services
-- **Services** — Contêm as regras de negócio (score, insights, previsão, gamificação)
-- **Middlewares** — Validação JWT, tratamento de erros
-- **Prisma Client** — Acesso ao banco de dados
-
-```
-Requisição HTTP
-      │
-      ▼
-┌─────────────────┐
-│ Middleware Auth  │  ← Valida JWT
-└────────┬────────┘
-         ▼
-┌─────────────────┐
-│  Controllers    │  ← Auth, Transaction, Category, Goal, Analytics, Badge
-└────────┬────────┘
-         ▼
-┌─────────────────┐
-│   Services      │  ← Regras de negócio (score, insights, forecast, badges)
-└────────┬────────┘
-         ▼
-┌─────────────────┐
-│  Prisma Client  │  ← Acesso ao PostgreSQL
-└─────────────────┘
-```
-
-### Nível 4 — Código (Estrutura de Pastas)
+## Estrutura de Pastas
 
 ```
 GestaoFinancasPessoais/

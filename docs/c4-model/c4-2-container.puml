@@ -1,0 +1,25 @@
+@startuml C4_Container
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+title Sistema de Gestão de Finanças Pessoais - Diagrama de Container (Nível 2)
+
+' Atores
+Person(usuario, "Usuário", "Pessoa física buscando controle, organização e previsibilidade sobre sua vida financeira.")
+
+' Limite do Sistema
+System_Boundary(sistema_gestao, "Gestão de Finanças Pessoais") {
+    
+    Container(frontend, "Aplicação Frontend", "SPA (React 18, Vite, TailwindCSS, TypeScript)", "Renderiza a interface rica, manipula formulários, valida dados no lado do cliente, gerencia a sessão (JWT) e exibe os dashboards e gráficos em tempo real.")
+    
+    Container(api, "Backend API REST", "Node.js, Express, TypeScript, Zod", "Núcleo do sistema. Processa o Score Financeiro, projeta saldos preditivos, valida payloads de entrada garantindo a integridade matemática e orquestra a inteligência de negócios.")
+    
+    ContainerDb(banco_dados, "Banco de Dados", "PostgreSQL", "Persiste com segurança informações relacionais (Perfis, Histórico Completo de Transações, Metas de Economia e Gamificação).")
+    
+}
+
+' Relacionamentos
+Rel(usuario, frontend, "Acessa painéis, navega pelas rotas e interage com os gráficos usando", "Navegador Web / HTTPS")
+Rel(frontend, api, "Faz requisições síncronas para carregar dados e submeter formulários usando", "JSON / HTTPS", $tags="async")
+Rel(api, banco_dados, "Lê e escreve dados relacionais de forma tipada usando", "Prisma Client (TCP)", $tags="sync")
+
+@enduml

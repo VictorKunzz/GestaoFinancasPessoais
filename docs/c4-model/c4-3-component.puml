@@ -1,0 +1,45 @@
+@startuml C4_Component
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title Sistema de Gestão de Finanças Pessoais - Diagrama de Componentes (Nível 3)
+
+' Elementos de Contorno (Fora da API)
+Container(spa, "Aplicação Frontend", "SPA (React, Vite)", "Provê a interface ao usuário.")
+ContainerDb(db, "Banco de Dados", "PostgreSQL", "Armazena informações relacionais.")
+
+' Limite do Container que estamos abrindo (API REST)
+Container_Boundary(api, "Backend API REST") {
+
+    Component(auth_comp, "Componente de Autenticação", "Express Route, Controller, Service, Zod", "Valida credenciais, criptografa senhas com bcrypt e assina/fornece tokens JWT.")
+    
+    Component(security_middleware, "Autenticador de Segurança", "Express Middleware", "Interceptador que valida a integridade do JWT, garantindo isolamento Multi-Tenant via injeção de userId.")
+    
+    Component(transaction_comp, "Gerenciador de Transações", "Controller, Service, Zod", "Valida matematicamente montantes e processa o log imutável de receitas e despesas.")
+    
+    Component(goal_comp, "Gerenciador de Metas", "Controller, Service, Zod", "Assegura integridade de alvos de economia e faz acompanhamento transacional de progresso.")
+    
+    Component(category_comp, "Gerenciador de Categorias", "Controller, Service", "Processa metadados classificatórios flexíveis.")
+    
+    Component(analytics_comp, "Motor de Analytics e Insights", "Controller, Service", "Núcleo de inteligência: processa Score Financeiro de 0-100 e constrói métricas de fluxo de caixa futuro baseado em médias.")
+    
+    Component(prisma_client, "Provedor de Acesso a Dados", "Prisma Client (TypeScript)", "Interface ORM oficial. Abstrai a complexidade TCP/SQL num cliente estritamente tipado.")
+}
+
+' Relacionamentos
+Rel(spa, auth_comp, "Inicia sessão via", "JSON/HTTPS")
+Rel(spa, security_middleware, "Faz chamadas protegidas de API enviando", "JWT Token")
+
+Rel(security_middleware, transaction_comp, "Autoriza roteamento para")
+Rel(security_middleware, goal_comp, "Autoriza roteamento para")
+Rel(security_middleware, category_comp, "Autoriza roteamento para")
+Rel(security_middleware, analytics_comp, "Autoriza roteamento para")
+
+Rel(auth_comp, prisma_client, "Salva/lê usuário usando", "Tipos Prisma")
+Rel(transaction_comp, prisma_client, "Lê/escreve histórico de fluxo em", "Tipos Prisma")
+Rel(goal_comp, prisma_client, "Salva avanço de limite em", "Tipos Prisma")
+Rel(category_comp, prisma_client, "Gere marcações em", "Tipos Prisma")
+Rel(analytics_comp, prisma_client, "Consome relatórios agregados via", "Tipos Prisma", $tags="async")
+
+Rel(prisma_client, db, "Lê e Escreve usando", "TCP / PostgreSQL")
+
+@enduml

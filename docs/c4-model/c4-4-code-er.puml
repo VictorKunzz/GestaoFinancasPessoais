@@ -1,0 +1,75 @@
+@startuml
+title Sistema de Gestão de Finanças Pessoais - Diagrama de Código/ER (Nível 4)
+
+' Esconde o ícone de classe ('C') para focar no formato de Entidade
+hide circle
+
+' Melhora o roteamento das linhas do Crow's form
+skinparam linetype ortho
+
+' Definição das Entidades do Prisma
+entity "User" as user {
+  *id : String <<uuid, PK>>
+  --
+  *name : String
+  *email : String <<unique>>
+  *passwordHash : String
+  *createdAt : DateTime
+}
+
+entity "Transaction" as trans {
+  *id : String <<uuid, PK>>
+  --
+  *userId : String <<FK>>
+  *categoryId : String <<FK>>
+  *type : TransactionType (enum)
+  *description : String
+  *amount : Decimal
+  *date : DateTime
+  *createdAt : DateTime
+}
+
+entity "Category" as cat {
+  *id : String <<uuid, PK>>
+  --
+  *name : String <<unique>>
+  icon : String?
+  *isDefault : Boolean
+}
+
+entity "Goal" as goal {
+  *id : String <<uuid, PK>>
+  --
+  *userId : String <<FK>>
+  *name : String
+  *targetAmount : Decimal
+  *savedAmount : Decimal
+  deadline : DateTime?
+  *createdAt : DateTime
+}
+
+entity "Badge" as badge {
+  *id : String <<uuid, PK>>
+  --
+  *name : String
+  *description : String
+  icon : String?
+  *condition : String
+}
+
+entity "UserBadge" as user_badge {
+  *id : String <<uuid, PK>>
+  --
+  *userId : String <<FK>>
+  *badgeId : String <<FK>>
+  *earnedAt : DateTime
+}
+
+' Relacionamentos
+user ||--o{ trans : "1:N (Realiza)"
+cat ||--o{ trans : "1:N (Categoriza)"
+user ||--o{ goal : "1:N (Define)"
+user ||--o{ user_badge : "1:N (Recebe)"
+badge ||--o{ user_badge : "1:N (É concedida)"
+
+@enduml
