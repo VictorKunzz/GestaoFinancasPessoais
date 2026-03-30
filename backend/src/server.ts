@@ -9,6 +9,7 @@ import categoryRoutes from './routes/category.routes';
 import transactionRoutes from './routes/transaction.routes';
 import goalRoutes from './routes/goal.routes';
 import analyticsRoutes from './routes/analytics.routes';
+import badgeRoutes from './routes/badge.routes';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -29,6 +30,7 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/goals', goalRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/badges', badgeRoutes);
 
 app.listen(PORT, () => {
   console.log(`Servidor rodando em http://localhost:${PORT}`);
