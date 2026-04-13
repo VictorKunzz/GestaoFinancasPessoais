@@ -6,91 +6,39 @@ Sistema de controle financeiro pessoal com dashboard visual, insights automátic
 
 ---
 
-##  Objetivo
+## Objetivo
 
 Ajudar o usuário a controlar sua vida financeira de forma visual, simples e inteligente, mostrando não só os gastos, mas também **insights e previsões** sobre seus hábitos financeiros.
 
 ---
 
-## Requisitos Funcionais
+## Documentação do Projeto
 
-| ID | Requisito | Prioridade |
-|---|---|---|
-| RF01 | Cadastro de usuário com nome, e-mail e senha | Alta |
-| RF02 | Login com e-mail e senha, retornando token JWT | Alta |
-| RF03 | Criação de transações (receita/despesa) com valor, descrição, data e categoria | Alta |
-| RF04 | Listagem de transações com filtros por período, categoria e tipo | Alta |
-| RF05 | Dashboard com saldo total atual | Alta |
-| RF06 | Gráficos de gastos por categoria e por período | Alta |
-| RF07 | Score de saúde financeira (0–100) | Média |
-| RF08 | Insights automáticos comparando mês atual vs. média dos últimos 3 meses | Média |
-| RF09 | Projeção de saldo futuro para 30, 60 e 90 dias | Média |
-| RF10 | Criação de metas financeiras com valor alvo e prazo | Média |
-| RF11 | Previsão de conclusão de cada meta financeira | Média |
-| RF12 | Classificação automática de transações por palavras-chave | Média |
-| RF13 | Gamificação com medalhas por conquistas | Baixa |
-| RF14 | Criação de categorias personalizadas | Baixa |
+Toda a documentação técnica, estrutural e de regras de negócio do sistema foi separada em arquivos específicos para melhor manutenção. Acesse a pasta [`docs/`](./docs/):
 
-## Requisitos Não-Funcionais
+- [Requisitos e Regras de Negócios](./docs/requirements.md): Lista de requisitos funcionais, não-funcionais e detalhamento das lógicas do sistema (Score de saúde, insights automáticos).
+- [Guia de Instalação e Execução](./docs/setup.md): Tutorial prático de como rodar as frentes do projeto em ambiente local (Backend/Frontend).
+- [Dicionário de Dados](./docs/database.md): Detalhamento de todas as tabelas, tipos e relacionamentos baseados no esquema do banco.
+- [Documentação da API](./docs/api.md): Especificações das rotas HTTP, métodos e regras de consumo do back-end.
+- [Rotinas de Testes](./docs/testing.md): Tutorial do script de validação e apresentações E2E das lógicas do servidor.
 
-| ID | Requisito | Tipo |
-|---|---|---|
-| RNF01 | Senhas armazenadas com bcrypt (hash + salt) | Segurança |
-| RNF02 | Rotas protegidas exigem JWT válido | Segurança |
-| RNF03 | API responde em < 500ms para operações comuns | Performance |
-| RNF04 | Frontend responsivo (mobile-first) | Usabilidade |
-| RNF05 | Backend com TypeScript e tipagem estrita | Manutenibilidade |
-| RNF06 | Validação de dados com Zod no back e front | Confiabilidade |
-| RNF07 | PostgreSQL com Prisma ORM | Portabilidade |
-
----
-
-## Funcionalidades Principais
-
-- Cadastro e login de usuário
-- Registro de receitas e despesas
-- Dashboard com saldo total
-- Gráficos de gastos por categoria
-- Filtro por período
-
----
-
-## Funcionalidades Diferenciadas
-
-### Score de saúde financeira
-Um número de 0 a 100 que mostra o quão saudável estão suas finanças, calculado com base em: relação receita/despesa, regularidade de depósitos em metas e ausência de meses no vermelho.
-
-### Insights automáticos
-O sistema analisa seus dados e mostra coisas como:
-- "Você gastou mais do que o normal esse mês"
-- "Seu maior gasto foi com alimentação"
-- "Se continuar assim, seu saldo acaba em X dias"
-
-### Previsão de saldo
-Projeção do saldo futuro para 30, 60 e 90 dias, baseado na média de receitas e despesas dos últimos 3 meses.
-
-### Metas com previsão de conclusão
-O sistema calcula em quanto tempo você consegue atingir uma meta financeira, baseado no seu ritmo atual de economia.
-
-### Classificação automática de gastos
-Se o usuário digitar algo tipo "Uber" ou "McDonalds", o sistema classifica automaticamente na categoria correta (Transporte, Alimentação, etc).
-
-### Gamificação
-Pequenos incentivos como medalhas, metas atingidas e evolução mês a mês.
-
----
-
-## Arquitetura (Modelo C4)
+### Arquitetura (Modelo C4)
 
 Os diagramas arquiteturais do sistema foram construídos utilizando o **Modelo C4** e a linguagem **PlantUML**.
 Eles detalham os níveis de Contexto, Container, Componentes e o Diagrama de Entidade-Relacionamento do banco de dados.
 
-Todos os diagramas podem ser consultados no diretório [`docs/c4-model/`](./docs/c4-model/).
+- [O código de todos os diagramas podem ser consultados no diretório `docs/plantuml/`](./docs/plantuml/)
+- [Os diagramas gerados a partir do código podem ser consultadas no diretório `docs/c4-model/`](./docs/c4-model/)
+
+---
 
 ## Estrutura de Pastas
 
 ```
 GestaoFinancasPessoais/
+├──.vscode/
+│   └── settings.json          # Configurações do VS Code
+│
 ├── backend/
 │   ├── src/
 │   │   ├── controllers/       # Handlers HTTP
@@ -103,14 +51,11 @@ GestaoFinancasPessoais/
 │   │   └── server.ts          # Entry point
 │   └── package.json
 │
-└── frontend/
-    ├── src/
-    │   ├── components/        # Componentes reutilizáveis
-    │   ├── pages/             # Páginas da aplicação
-    │   ├── hooks/             # Custom hooks
-    │   ├── services/          # Chamadas API (Axios)
-    │   └── App.tsx
-    └── package.json
+├── frontend/
+│   ├── src/                  # Inicialização pendente
+│   └── package.json
+│
+└── docs/                     # Documentação de Engenharia de Software
 ```
 
 ---
@@ -139,7 +84,7 @@ GestaoFinancasPessoais/
 
 ##  Roadmap de Desenvolvimento
 
-### Fase 1 — Backend
+### Fase 1 - Backend
 1. Setup projeto Node.js + Express + TypeScript
 2. Configurar Prisma + schema PostgreSQL
 3. Autenticação (registro, login, JWT)
@@ -149,7 +94,7 @@ GestaoFinancasPessoais/
 7. Analytics (score, insights, previsão)
 8. Gamificação (badges)
 
-### Fase 2 — Frontend
+### Fase 2 - Frontend
 1. Setup React + Vite + TailwindCSS
 2. Páginas de Login / Cadastro
 3. Dashboard principal
@@ -162,5 +107,5 @@ GestaoFinancasPessoais/
 
 ##  Autor
 
-Victor Henrique Kunz de Souza
-Projeto acadêmico — Programação Web, Engenharia de Software - Universidade Católica de Santa Catarina (Joinville)
+Victor Henrique Kunz de Souza  
+Projeto acadêmico - Programação Web, Engenharia de Software - Universidade Católica de Santa Catarina (Joinville)

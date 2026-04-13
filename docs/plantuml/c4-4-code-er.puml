@@ -1,5 +1,5 @@
 @startuml
-title Sistema de Gestão de Finanças Pessoais - Diagrama de Código/ER (Nível 4)
+title C4 - Diagrama de Código/ER (Nível 4)
 
 ' Esconde o ícone de classe ('C') para focar no formato de Entidade
 hide circle

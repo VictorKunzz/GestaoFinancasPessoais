@@ -1,7 +1,7 @@
 @startuml C4_Component
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
 
-title Sistema de Gestão de Finanças Pessoais - Diagrama de Componentes (Nível 3)
+title C4 - Diagrama de Componentes (Nível 3)
 
 ' Elementos de Contorno (Fora da API)
 Container(spa, "Aplicação Frontend", "SPA (React, Vite)", "Provê a interface ao usuário.")

@@ -1,6 +1,5 @@
 import prisma from "../utils/prisma";
 
-// Lista todas as medalhas do sistema e marca quais o usuario ja tem
 async function getAllBadges(userId: string) {
   const todasMedalhas = await prisma.badge.findMany();
   
@@ -26,7 +25,6 @@ async function getAllBadges(userId: string) {
   return resultado;
 }
 
-// Retorna apenas as medalhas que o usuario ja conquistou
 async function getUserBadges(userId: string) {
   const usuarioMedalhas = await prisma.userBadge.findMany({
     where: { userId },
@@ -43,16 +41,14 @@ async function getUserBadges(userId: string) {
   }));
 }
 
-// Funcao para ser chamada no backend quando uma acao acontece para checar se ganhou medalha
 async function checkAndAwardBadge(userId: string, condition: string) {
-  // Procura a medalha pela condicao
+
   const medalha = await prisma.badge.findFirst({
     where: { condition },
   });
 
-  if (!medalha) return null; // Condicao nao existe como medalha
+  if (!medalha) return null;
 
-  // Verifica se o usuario ja tem essa medalha
   const jaPossui = await prisma.userBadge.findFirst({
     where: {
       userId,
@@ -60,9 +56,8 @@ async function checkAndAwardBadge(userId: string, condition: string) {
     },
   });
 
-  if (jaPossui) return null; // Ja tem a medalha, nao faz nada
+  if (jaPossui) return null;
 
-  // Logica especifica para cada condicao (vamos validar se ele realmente merece antes de dar)
   let mereceMedalha = false;
 
   if (condition === "first_transaction") {
@@ -74,27 +69,23 @@ async function checkAndAwardBadge(userId: string, condition: string) {
     if (metas >= 1) mereceMedalha = true;
   }
   else if (condition === "goal_reached") {
-    // Procura alguma meta onde o valor salvo seja >= valor alvo
+
     const metasAtingidas = await prisma.goal.findFirst({
       where: {
         userId,
         savedAmount: { gte: prisma.goal.fields.targetAmount }
-      } as any // o prisma nao aceita comparacao de colunas diretamente no findFirst sem raw de forma simples, vamos pegar todas e checar no map
+      } as any
     });
     
-    // Contorno para a limitacao do Prisma de comparar colunas
     const todasMetas = await prisma.goal.findMany({ where: { userId } });
     const atingiuAlguma = todasMetas.some(m => Number(m.savedAmount) >= Number(m.targetAmount));
     
     if (atingiuAlguma) mereceMedalha = true;
   }
   else if (condition === "positive_month" || condition === "spent_less") {
-    // Para fins didaticos, vamos confiar que se a rota chamou essas condicoes especificas de fechamento de mes, ele mereceu.
-    // Em um sistema real, isso rodaria num CRON (job agendado todo dia 1).
     mereceMedalha = true;
   }
 
-  // Se merecer, a gente da a medalha
   if (mereceMedalha) {
     const conquista = await prisma.userBadge.create({
       data: {

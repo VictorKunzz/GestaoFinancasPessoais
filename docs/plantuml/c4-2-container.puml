@@ -1,7 +1,7 @@
 @startuml C4_Container
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
 
-title Sistema de Gestão de Finanças Pessoais - Diagrama de Container (Nível 2)
+title C4 - Diagrama de Container (Nível 2)
 
 ' Atores
 Person(usuario, "Usuário", "Pessoa física buscando controle, organização e previsibilidade sobre sua vida financeira.")

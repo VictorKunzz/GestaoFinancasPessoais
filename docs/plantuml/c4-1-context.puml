@@ -1,7 +1,7 @@
 @startuml C4_Context
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
 
-title Sistema de Gestão de Finanças Pessoais - Diagrama de Contexto (Nível 1)
+title C4 -Diagrama de Contexto (Nível 1)
 
 ' Atores
 Person(usuario, "Usuário", "Pessoa que deseja controlar sua vida financeira e acompanhar seu patrimônio.")
