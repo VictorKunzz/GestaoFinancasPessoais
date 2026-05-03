@@ -1,0 +1,147 @@
+@import "tailwindcss";
+
+/* ===== Design Tokens (TailwindCSS v4) ===== */
+@theme {
+  /* Fontes */
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  /* Cores Customizadas */
+  --color-bg-primary: #0f0f23;
+  --color-bg-secondary: #141432;
+  --color-bg-card: #1a1a3e;
+  --color-bg-card-hover: #252550;
+  --color-bg-input: #1e1e4a;
+
+  --color-border-default: rgba(255, 255, 255, 0.08);
+  --color-border-hover: rgba(255, 255, 255, 0.15);
+
+  --color-text-primary: #f1f5f9;
+  --color-text-secondary: #94a3b8;
+  --color-text-muted: #64748b;
+
+  --color-accent-emerald: #10b981;
+  --color-accent-emerald-light: #34d399;
+  --color-accent-rose: #f43f5e;
+  --color-accent-rose-light: #fb7185;
+  --color-accent-violet: #8b5cf6;
+  --color-accent-violet-light: #a78bfa;
+  --color-accent-amber: #f59e0b;
+  --color-accent-amber-light: #fbbf24;
+  --color-accent-blue: #3b82f6;
+  --color-accent-blue-light: #60a5fa;
+
+  /* Animações */
+  --animate-fade-in: fade-in 0.4s ease-out;
+  --animate-fade-in-up: fade-in-up 0.5s ease-out;
+  --animate-slide-in-left: slide-in-left 0.3s ease-out;
+  --animate-pulse-soft: pulse-soft 2s ease-in-out infinite;
+  --animate-scale-in: scale-in 0.3s ease-out;
+}
+
+/* ===== Keyframes ===== */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ===== Estilos Globais ===== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ===== Scrollbar customizada ===== */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-bg-card-hover);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-accent-violet);
+}
+
+/* ===== Classes utilitárias de glassmorphism ===== */
+.glass {
+  background: rgba(26, 26, 62, 0.6);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-hover:hover {
+  background: rgba(37, 37, 80, 0.7);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+/* ===== Gradiente de fundo decorativo ===== */
+.bg-gradient-radial {
+  background: radial-gradient(
+    ellipse at 20% 50%,
+    rgba(139, 92, 246, 0.08) 0%,
+    transparent 50%
+  ), radial-gradient(
+    ellipse at 80% 20%,
+    rgba(16, 185, 129, 0.06) 0%,
+    transparent 50%
+  );
+}
