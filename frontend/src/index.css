@@ -40,8 +40,13 @@
 
 /* ===== Keyframes ===== */
 @keyframes fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes fade-in-up {
@@ -49,6 +54,7 @@
     opacity: 0;
     transform: translateY(16px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -60,6 +66,7 @@
     opacity: 0;
     transform: translateX(-16px);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
@@ -67,8 +74,15 @@
 }
 
 @keyframes pulse-soft {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.7;
+  }
 }
 
 @keyframes scale-in {
@@ -76,6 +90,7 @@
     opacity: 0;
     transform: scale(0.95);
   }
+
   to {
     opacity: 1;
     transform: scale(1);
@@ -83,12 +98,6 @@
 }
 
 /* ===== Estilos Globais ===== */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
 html {
   scroll-behavior: smooth;
 }
@@ -135,13 +144,9 @@ body {
 
 /* ===== Gradiente de fundo decorativo ===== */
 .bg-gradient-radial {
-  background: radial-gradient(
-    ellipse at 20% 50%,
-    rgba(139, 92, 246, 0.08) 0%,
-    transparent 50%
-  ), radial-gradient(
-    ellipse at 80% 20%,
-    rgba(16, 185, 129, 0.06) 0%,
-    transparent 50%
-  );
+  background: radial-gradient(ellipse at 20% 50%,
+      rgba(139, 92, 246, 0.08) 0%,
+      transparent 50%), radial-gradient(ellipse at 80% 20%,
+      rgba(16, 185, 129, 0.06) 0%,
+      transparent 50%);
 }
