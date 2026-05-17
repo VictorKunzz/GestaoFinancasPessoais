@@ -3,6 +3,7 @@ import { Plus } from 'lucide-react';
 import type { Transaction, TransactionType, Category, CreateTransactionRequest } from '../types';
 import * as transactionService from '../services/transaction.service';
 import * as categoryService from '../services/category.service';
+import * as badgeService from '../services/badge.service';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
@@ -90,6 +91,15 @@ export default function TransactionsPage() {
     } else {
       const created = await transactionService.create(data);
       setTransactions((prev) => [created, ...prev]);
+      
+      try {
+        const badgeResult = await badgeService.check('first_transaction');
+        if (badgeResult.awarded) {
+          alert(badgeResult.message);
+        }
+      } catch (err) {
+        console.error('Erro ao checar badge', err);
+      }
     }
   }
 

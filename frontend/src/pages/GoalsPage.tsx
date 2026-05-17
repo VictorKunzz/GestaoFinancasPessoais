@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Plus } from 'lucide-react';
 import type { Goal, CreateGoalRequest } from '../types';
 import * as goalService from '../services/goal.service';
+import * as badgeService from '../services/badge.service';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
@@ -52,9 +53,26 @@ export default function GoalsPage() {
     if (editingGoal) {
       const updated = await goalService.update(editingGoal.id, data);
       setGoals((prev) => prev.map((g) => (g.id === updated.id ? updated : g)));
+      
+      if (Number(updated.savedAmount) >= Number(updated.targetAmount)) {
+        try {
+          const badgeResult = await badgeService.check('goal_reached');
+          if (badgeResult.awarded) alert(badgeResult.message);
+        } catch (err) { console.error('Erro ao checar badge', err); }
+      }
     } else {
       const created = await goalService.create(data);
       setGoals((prev) => [created, ...prev]);
+
+      try {
+        const badgeResult = await badgeService.check('first_goal');
+        if (badgeResult.awarded) alert(badgeResult.message);
+        
+        if (Number(created.savedAmount) >= Number(created.targetAmount)) {
+          const reachedResult = await badgeService.check('goal_reached');
+          if (reachedResult.awarded) alert(reachedResult.message);
+        }
+      } catch (err) { console.error('Erro ao checar badge', err); }
     }
   }
 
