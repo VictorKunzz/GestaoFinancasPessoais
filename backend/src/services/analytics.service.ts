@@ -35,7 +35,7 @@ async function getHealthScore(userId: string) {
       totalDespesas: 0,
       saldo: 0,
       percentualGasto: 0,
-      mensagem: "Sem transacoes neste mes. Comece registrando suas receitas e despesas!",
+      mensagem: "Sem transações neste mês. Comece registrando suas receitas e despesas!",
     };
   }
 
@@ -80,7 +80,7 @@ async function getHealthScore(userId: string) {
     nivel = "Regular";
     mensagem = "Cuidado! Seus gastos estao chegando perto da sua renda. Revise seus habitos.";
   } else {
-    nivel = "Critico";
+    nivel = "Crítico";
     mensagem = "Atencao! Voce esta gastando mais do que ganha. Reduza despesas urgentemente.";
   }
 
@@ -153,7 +153,7 @@ async function getInsights(userId: string) {
   }
 
   if (totalGasto === 0) {
-    dicas.push("Nenhuma despesa registrada neste mes.");
+    dicas.push("Nenhuma despesa registrada neste mês.");
   }
 
   return {
@@ -184,7 +184,7 @@ async function getBalanceForecast(userId: string) {
       previsaoReceita: 0,
       previsaoDespesa: 0,
       previsaoSaldo: 0,
-      mensagem: "Sem dados suficientes para fazer uma previsao. Continue registrando!",
+      mensagem: "Sem dados suficientes para fazer uma previsão. Continue registrando!",
     };
   }
 
