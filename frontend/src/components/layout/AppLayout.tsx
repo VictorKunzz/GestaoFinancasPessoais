@@ -29,8 +29,8 @@ export default function AppLayout() {
           title={title}
         />
 
-        <main className="flex-1 px-4 py-6 lg:px-8 lg:py-8 overflow-y-auto">
-          <div className="animate-fade-in-up">
+        <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8 overflow-y-auto">
+          <div className="max-w-7xl mx-auto animate-fade-in-up">
             <Outlet />
           </div>
         </main>

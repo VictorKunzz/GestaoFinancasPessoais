@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import type { Transaction, TransactionType, Category, CreateTransactionRequest } from '../../types';
+import { useToast } from '../../hooks/useToast';
 import Modal from '../ui/Modal';
 import Input from '../ui/Input';
 import Button from '../ui/Button';
@@ -19,6 +20,7 @@ export default function TransactionModal({
   categories,
   transaction,
 }: TransactionModalProps) {
+  const { addToast } = useToast();
   const [type, setType] = useState<TransactionType>('EXPENSE');
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
@@ -77,7 +79,7 @@ export default function TransactionModal({
       });
       onClose();
     } catch {
-      setError('Erro ao salvar transação. Tente novamente.');
+      addToast('error', 'Erro ao salvar transação. Tente novamente.');
     } finally {
       setIsLoading(false);
     }

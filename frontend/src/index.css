@@ -36,6 +36,7 @@
   --animate-slide-in-left: slide-in-left 0.3s ease-out;
   --animate-pulse-soft: pulse-soft 2s ease-in-out infinite;
   --animate-scale-in: scale-in 0.3s ease-out;
+  --animate-slide-in-toast: slide-in-toast 0.35s cubic-bezier(0.21, 1.02, 0.73, 1);
 }
 
 /* ===== Keyframes ===== */
@@ -94,6 +95,18 @@
   to {
     opacity: 1;
     transform: scale(1);
+  }
+}
+
+@keyframes slide-in-toast {
+  from {
+    opacity: 0;
+    transform: translateX(100%) scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
   }
 }
 

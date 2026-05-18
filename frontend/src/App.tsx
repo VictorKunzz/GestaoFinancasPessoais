@@ -1,5 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
+import { ToastProvider } from './contexts/ToastContext';
+import ToastContainer from './components/ui/ToastContainer';
 import AppLayout from './components/layout/AppLayout';
 import PrivateRoute from './components/layout/PrivateRoute';
 
@@ -14,30 +16,33 @@ import BadgesPage from './pages/BadgesPage';
 export default function App() {
   return (
     <AuthProvider>
-      <Router>
-        <Routes>
-          {/* Rotas Públicas */}
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
+      <ToastProvider>
+        <Router>
+          <Routes>
+            {/* Rotas Públicas */}
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
 
-          {/* Rotas Protegidas */}
-          <Route
-            element={
-              <PrivateRoute>
-                <AppLayout />
-              </PrivateRoute>
-            }
-          >
-            <Route path="/" element={<DashboardPage />} />
-            <Route path="/transactions" element={<TransactionsPage />} />
-            <Route path="/goals" element={<GoalsPage />} />
-            <Route path="/badges" element={<BadgesPage />} />
-          </Route>
+            {/* Rotas Protegidas */}
+            <Route
+              element={
+                <PrivateRoute>
+                  <AppLayout />
+                </PrivateRoute>
+              }
+            >
+              <Route path="/" element={<DashboardPage />} />
+              <Route path="/transactions" element={<TransactionsPage />} />
+              <Route path="/goals" element={<GoalsPage />} />
+              <Route path="/badges" element={<BadgesPage />} />
+            </Route>
 
-          {/* Fallback */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </Router>
+            {/* Fallback */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Router>
+        <ToastContainer />
+      </ToastProvider>
     </AuthProvider>
   );
 }

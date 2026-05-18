@@ -4,6 +4,7 @@ import type { Transaction, TransactionType, Category, CreateTransactionRequest }
 import * as transactionService from '../services/transaction.service';
 import * as categoryService from '../services/category.service';
 import * as badgeService from '../services/badge.service';
+import { useToast } from '../hooks/useToast';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
@@ -12,6 +13,7 @@ import TransactionTable from '../components/transactions/TransactionTable';
 import TransactionModal from '../components/transactions/TransactionModal';
 
 export default function TransactionsPage() {
+  const { addToast } = useToast();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -88,14 +90,16 @@ export default function TransactionsPage() {
       setTransactions((prev) =>
         prev.map((t) => (t.id === updated.id ? updated : t))
       );
+      addToast('success', 'Transação atualizada com sucesso!');
     } else {
       const created = await transactionService.create(data);
       setTransactions((prev) => [created, ...prev]);
-      
+      addToast('success', 'Transação criada com sucesso!');
+
       try {
         const badgeResult = await badgeService.check('first_transaction');
         if (badgeResult.awarded) {
-          alert(badgeResult.message);
+          addToast('badge', badgeResult.message);
         }
       } catch (err) {
         console.error('Erro ao checar badge', err);
@@ -110,8 +114,9 @@ export default function TransactionsPage() {
       await transactionService.remove(deleteTarget.id);
       setTransactions((prev) => prev.filter((t) => t.id !== deleteTarget.id));
       setDeleteTarget(null);
+      addToast('success', 'Transação removida com sucesso!');
     } catch {
-      setError('Erro ao remover transação.');
+      addToast('error', 'Erro ao remover transação.');
     } finally {
       setDeleting(false);
     }
@@ -162,11 +167,6 @@ export default function TransactionsPage() {
         onCategoryChange={setCategoryFilter}
         categories={categories}
       />
-
-      {/* Error banner */}
-      {error && transactions.length > 0 && (
-        <p className="text-sm text-accent-rose">{error}</p>
-      )}
 
       {/* Table */}
       <TransactionTable

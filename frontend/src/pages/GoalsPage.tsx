@@ -3,6 +3,7 @@ import { Plus } from 'lucide-react';
 import type { Goal, CreateGoalRequest } from '../types';
 import * as goalService from '../services/goal.service';
 import * as badgeService from '../services/badge.service';
+import { useToast } from '../hooks/useToast';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
@@ -10,6 +11,7 @@ import GoalCard from '../components/goals/GoalCard';
 import GoalModal from '../components/goals/GoalModal';
 
 export default function GoalsPage() {
+  const { addToast } = useToast();
   const [goals, setGoals] = useState<Goal[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -53,24 +55,26 @@ export default function GoalsPage() {
     if (editingGoal) {
       const updated = await goalService.update(editingGoal.id, data);
       setGoals((prev) => prev.map((g) => (g.id === updated.id ? updated : g)));
-      
+      addToast('success', 'Meta atualizada com sucesso!');
+
       if (Number(updated.savedAmount) >= Number(updated.targetAmount)) {
         try {
           const badgeResult = await badgeService.check('goal_reached');
-          if (badgeResult.awarded) alert(badgeResult.message);
+          if (badgeResult.awarded) addToast('badge', badgeResult.message);
         } catch (err) { console.error('Erro ao checar badge', err); }
       }
     } else {
       const created = await goalService.create(data);
       setGoals((prev) => [created, ...prev]);
+      addToast('success', 'Meta criada com sucesso!');
 
       try {
         const badgeResult = await badgeService.check('first_goal');
-        if (badgeResult.awarded) alert(badgeResult.message);
-        
+        if (badgeResult.awarded) addToast('badge', badgeResult.message);
+
         if (Number(created.savedAmount) >= Number(created.targetAmount)) {
           const reachedResult = await badgeService.check('goal_reached');
-          if (reachedResult.awarded) alert(reachedResult.message);
+          if (reachedResult.awarded) addToast('badge', reachedResult.message);
         }
       } catch (err) { console.error('Erro ao checar badge', err); }
     }
@@ -83,8 +87,9 @@ export default function GoalsPage() {
       await goalService.remove(deleteTarget.id);
       setGoals((prev) => prev.filter((g) => g.id !== deleteTarget.id));
       setDeleteTarget(null);
+      addToast('success', 'Meta removida com sucesso!');
     } catch {
-      setError('Erro ao remover meta.');
+      addToast('error', 'Erro ao remover meta.');
     } finally {
       setDeleting(false);
     }
@@ -124,11 +129,6 @@ export default function GoalsPage() {
           Nova Meta
         </Button>
       </div>
-
-      {/* Error banner */}
-      {error && goals.length > 0 && (
-        <p className="text-sm text-accent-rose">{error}</p>
-      )}
 
       {/* Goals grid */}
       {goals.length === 0 ? (

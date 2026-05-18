@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import type { Goal, CreateGoalRequest } from '../../types';
+import { useToast } from '../../hooks/useToast';
 import Modal from '../ui/Modal';
 import Input from '../ui/Input';
 import Button from '../ui/Button';
@@ -12,6 +13,7 @@ interface GoalModalProps {
 }
 
 export default function GoalModal({ isOpen, onClose, onSubmit, goal }: GoalModalProps) {
+  const { addToast } = useToast();
   const [name, setName] = useState('');
   const [targetAmount, setTargetAmount] = useState('');
   const [savedAmount, setSavedAmount] = useState('');
@@ -67,7 +69,7 @@ export default function GoalModal({ isOpen, onClose, onSubmit, goal }: GoalModal
       });
       onClose();
     } catch {
-      setError('Erro ao salvar meta. Tente novamente.');
+      addToast('error', 'Erro ao salvar meta. Tente novamente.');
     } finally {
       setIsLoading(false);
     }
