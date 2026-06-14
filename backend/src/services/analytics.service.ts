@@ -143,8 +143,8 @@ async function getInsights(userId: string) {
 
   const dicas: string[] = [];
 
-  if (categoriasComPercentual.length > 0) {
-    const maiorGasto = categoriasComPercentual[0];
+  const maiorGasto = categoriasComPercentual[0];
+  if (maiorGasto) {
     dicas.push(`Sua maior categoria de gasto é "${maiorGasto.nome}" com ${maiorGasto.percentual}% do total.`);
   }
 
@@ -223,4 +223,102 @@ async function getBalanceForecast(userId: string) {
   };
 }
 
-export default { getHealthScore, getInsights, getBalanceForecast };
+const MESES_CURTOS = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+
+// Serie mensal (ultimos N meses) de receitas, despesas e saldo — alimenta o grafico de fluxo de caixa.
+async function getCashflow(userId: string, meses = 6) {
+  const hoje = new Date();
+  const inicio = new Date(hoje.getFullYear(), hoje.getMonth() - (meses - 1), 1);
+  const fim = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0, 23, 59, 59);
+
+  const transacoes = await prisma.transaction.findMany({
+    where: { userId, date: { gte: inicio, lte: fim } },
+    select: { type: true, amount: true, date: true },
+  });
+
+  const buckets: Record<string, { receitas: number; despesas: number }> = {};
+  for (let i = 0; i < meses; i++) {
+    const d = new Date(hoje.getFullYear(), hoje.getMonth() - (meses - 1) + i, 1);
+    const chave = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    buckets[chave] = { receitas: 0, despesas: 0 };
+  }
+
+  transacoes.forEach((t) => {
+    const d = new Date(t.date);
+    const chave = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    const bucket = buckets[chave];
+    if (!bucket) return;
+    const valor = Number(t.amount);
+    if (t.type === "INCOME") {
+      bucket.receitas += valor;
+    } else {
+      bucket.despesas += valor;
+    }
+  });
+
+  const serie = Object.entries(buckets).map(([chave, v]) => {
+    const mesIndex = Number(chave.split("-")[1]) - 1;
+    return {
+      mes: chave,
+      label: MESES_CURTOS[mesIndex] ?? chave,
+      receitas: Math.round(v.receitas * 100) / 100,
+      despesas: Math.round(v.despesas * 100) / 100,
+      saldo: Math.round((v.receitas - v.despesas) * 100) / 100,
+    };
+  });
+
+  return { meses: serie };
+}
+
+// Comparativo do mes atual vs. media dos 3 meses anteriores (RF08).
+async function getMonthlyComparison(userId: string) {
+  const hoje = new Date();
+  const inicioMesAtual = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+  const fimMesAtual = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0, 23, 59, 59);
+  const inicioAnteriores = new Date(hoje.getFullYear(), hoje.getMonth() - 3, 1);
+  const fimAnteriores = new Date(hoje.getFullYear(), hoje.getMonth(), 0, 23, 59, 59);
+
+  const [despesasMes, despesasAnteriores] = await Promise.all([
+    prisma.transaction.aggregate({
+      _sum: { amount: true },
+      where: { userId, type: "EXPENSE", date: { gte: inicioMesAtual, lte: fimMesAtual } },
+    }),
+    prisma.transaction.aggregate({
+      _sum: { amount: true },
+      where: { userId, type: "EXPENSE", date: { gte: inicioAnteriores, lte: fimAnteriores } },
+    }),
+  ]);
+
+  const gastoMesAtual = Number(despesasMes._sum.amount ?? 0);
+  const mediaAnterior = Number(despesasAnteriores._sum.amount ?? 0) / 3;
+
+  let variacaoPercentual = 0;
+  if (mediaAnterior > 0) {
+    variacaoPercentual = Math.round(((gastoMesAtual - mediaAnterior) / mediaAnterior) * 100);
+  }
+
+  let tendencia: "alta" | "baixa" | "estavel" = "estavel";
+  let mensagem = "";
+
+  if (mediaAnterior === 0) {
+    mensagem = "Ainda nao ha historico suficiente para comparar seus gastos.";
+  } else if (variacaoPercentual > 5) {
+    tendencia = "alta";
+    mensagem = `Voce gastou ${variacaoPercentual}% a mais que a sua media dos ultimos 3 meses.`;
+  } else if (variacaoPercentual < -5) {
+    tendencia = "baixa";
+    mensagem = `Parabens! Voce gastou ${Math.abs(variacaoPercentual)}% a menos que a sua media dos ultimos 3 meses.`;
+  } else {
+    mensagem = "Seus gastos estao em linha com a media dos ultimos 3 meses.";
+  }
+
+  return {
+    gastoMesAtual: Math.round(gastoMesAtual * 100) / 100,
+    mediaAnterior: Math.round(mediaAnterior * 100) / 100,
+    variacaoPercentual,
+    tendencia,
+    mensagem,
+  };
+}
+
+export default { getHealthScore, getInsights, getBalanceForecast, getCashflow, getMonthlyComparison };

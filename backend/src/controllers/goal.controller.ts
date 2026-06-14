@@ -15,7 +15,7 @@ async function getAll(req: Request, res: Response) {
 async function getById(req: Request, res: Response) {
   try {
     const userId = (req as any).userId;
-    const meta = await goalService.getById(userId, req.params.id);
+    const meta = await goalService.getById(userId, req.params.id as string);
     res.json(meta);
   } catch (error: any) {
     if (error.message === "Meta nao encontrada") {
@@ -45,7 +45,7 @@ async function update(req: Request, res: Response) {
   try {
     const userId = (req as any).userId;
     const dados = updateGoalSchema.parse(req.body);
-    const meta = await goalService.update(userId, req.params.id, dados);
+    const meta = await goalService.update(userId, req.params.id as string, dados);
     res.json(meta);
   } catch (error: any) {
     if (error.name === "ZodError") {
@@ -63,7 +63,7 @@ async function update(req: Request, res: Response) {
 async function remove(req: Request, res: Response) {
   try {
     const userId = (req as any).userId;
-    await goalService.remove(userId, req.params.id);
+    await goalService.remove(userId, req.params.id as string);
     res.json({ message: "Meta removida com sucesso" });
   } catch (error: any) {
     if (error.message === "Meta nao encontrada") {

@@ -10,6 +10,8 @@ import transactionRoutes from './routes/transaction.routes';
 import goalRoutes from './routes/goal.routes';
 import analyticsRoutes from './routes/analytics.routes';
 import badgeRoutes from './routes/badge.routes';
+import adminRoutes from './routes/admin.routes';
+import budgetRoutes from './routes/budget.routes';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -31,6 +33,8 @@ app.use('/api/transactions', transactionRoutes);
 app.use('/api/goals', goalRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/badges', badgeRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/budgets', budgetRoutes);
 
 app.listen(PORT, () => {
   console.log(`Servidor rodando em http://localhost:${PORT}`);

@@ -1,12 +1,21 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
-import type { HealthScore, Insights, BalanceForecast, Transaction } from '../types';
+import type {
+  HealthScore,
+  Insights,
+  BalanceForecast,
+  Transaction,
+  Cashflow,
+  MonthlyComparison,
+} from '../types';
 import * as analyticsService from '../services/analytics.service';
 import * as transactionService from '../services/transaction.service';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import ScoreCard from '../components/dashboard/ScoreCard';
 import BalanceSummary from '../components/dashboard/BalanceSummary';
 import CategoryPieChart from '../components/dashboard/CategoryPieChart';
+import CashflowChart from '../components/dashboard/CashflowChart';
+import ComparisonCard from '../components/dashboard/ComparisonCard';
 import InsightCard from '../components/dashboard/InsightCard';
 import ForecastCard from '../components/dashboard/ForecastCard';
 import RecentTransactions from '../components/dashboard/RecentTransactions';
@@ -16,6 +25,8 @@ export default function DashboardPage() {
   const [healthScore, setHealthScore] = useState<HealthScore | null>(null);
   const [insights, setInsights] = useState<Insights | null>(null);
   const [forecast, setForecast] = useState<BalanceForecast | null>(null);
+  const [cashflow, setCashflow] = useState<Cashflow | null>(null);
+  const [comparison, setComparison] = useState<MonthlyComparison | null>(null);
   const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -26,21 +37,22 @@ export default function DashboardPage() {
         setLoading(true);
         setError(null);
 
-        const [scoreData, insightsData, forecastData, transactionsData] = await Promise.all([
-          analyticsService.getHealthScore(),
-          analyticsService.getInsights(),
-          analyticsService.getBalanceForecast(),
-          transactionService.getAll(),
-        ]);
+        const [scoreData, insightsData, forecastData, cashflowData, comparisonData, transactionsData] =
+          await Promise.all([
+            analyticsService.getHealthScore(),
+            analyticsService.getInsights(),
+            analyticsService.getBalanceForecast(),
+            analyticsService.getCashflow(),
+            analyticsService.getMonthlyComparison(),
+            transactionService.getAll({ limit: 5 }),
+          ]);
 
         setHealthScore(scoreData);
         setInsights(insightsData);
         setForecast(forecastData);
-
-        const sorted = [...transactionsData].sort(
-          (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-        );
-        setRecentTransactions(sorted.slice(0, 5));
+        setCashflow(cashflowData);
+        setComparison(comparisonData);
+        setRecentTransactions(transactionsData.data);
       } catch {
         setError('Erro ao carregar dados do dashboard. Verifique se o servidor esta rodando.');
       } finally {
@@ -105,10 +117,14 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {cashflow && <CashflowChart meses={cashflow.meses} />}
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {forecast && <ForecastCard data={forecast} />}
-        {insights && <InsightCard dicas={insights.dicas} />}
+        {comparison && <ComparisonCard data={comparison} />}
       </div>
+
+      {insights && <InsightCard dicas={insights.dicas} />}
 
       <RecentTransactions transactions={recentTransactions} />
     </div>

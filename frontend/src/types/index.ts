@@ -1,10 +1,13 @@
 // ===== Tipos do Sistema de Gestão de Finanças Pessoais =====
 
 // --- Auth ---
+export type Role = 'USER' | 'ADMIN';
+
 export interface User {
   id: string;
   name: string;
   email: string;
+  role?: Role;
   createdAt?: string;
 }
 
@@ -30,6 +33,17 @@ export interface Category {
   name: string;
   icon: string | null;
   isDefault: boolean;
+  userId?: string | null;
+}
+
+export interface CreateCategoryRequest {
+  name: string;
+  icon?: string;
+}
+
+export interface UpdateCategoryRequest {
+  name?: string;
+  icon?: string;
 }
 
 // --- Transações ---
@@ -68,6 +82,17 @@ export interface TransactionFilters {
   categoryId?: string;
   startDate?: string;
   endDate?: string;
+  search?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface PaginatedTransactions {
+  data: Transaction[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
 }
 
 // --- Metas ---
@@ -93,6 +118,29 @@ export interface UpdateGoalRequest {
   targetAmount?: number;
   savedAmount?: number;
   deadline?: string;
+}
+
+// --- Aportes (vínculo de metas) ---
+export interface GoalContribution {
+  id: string;
+  goalId: string;
+  userId: string;
+  amount: number | string;
+  note: string | null;
+  date: string;
+  createdAt: string;
+}
+
+export interface CreateContributionRequest {
+  amount: number;
+  note?: string;
+  date?: string;
+}
+
+export interface AddContributionResponse {
+  contribution: GoalContribution;
+  goal: Goal;
+  badge: { awarded: boolean; badge?: Badge } | null;
 }
 
 // --- Analytics ---
@@ -127,13 +175,60 @@ export interface BalanceForecast {
   mensagem: string;
 }
 
+export interface CashflowPoint {
+  mes: string;
+  label: string;
+  receitas: number;
+  despesas: number;
+  saldo: number;
+}
+
+export interface Cashflow {
+  meses: CashflowPoint[];
+}
+
+export interface MonthlyComparison {
+  gastoMesAtual: number;
+  mediaAnterior: number;
+  variacaoPercentual: number;
+  tendencia: 'alta' | 'baixa' | 'estavel';
+  mensagem: string;
+}
+
+// --- Orçamentos ---
+export interface Budget {
+  id: string;
+  categoryId: string;
+  category: { id: string; name: string; icon: string | null };
+  monthlyLimit: number;
+  spent: number;
+  percentage: number;
+  exceeded: boolean;
+}
+
+export interface CreateBudgetRequest {
+  categoryId: string;
+  monthlyLimit: number;
+}
+
+export interface UpdateBudgetRequest {
+  monthlyLimit: number;
+}
+
 // --- Badges ---
+export type BadgeCondition =
+  | 'FIRST_TRANSACTION'
+  | 'FIRST_GOAL'
+  | 'GOAL_REACHED'
+  | 'POSITIVE_MONTH'
+  | 'SPENT_LESS';
+
 export interface Badge {
   id: string;
   name: string;
   description: string;
   icon: string | null;
-  condition: string;
+  condition: BadgeCondition;
   earned: boolean;
   earnedAt: string | null;
 }
@@ -150,4 +245,38 @@ export interface BadgeCheckResponse {
   awarded: boolean;
   message: string;
   badge?: Badge;
+}
+
+// --- Admin ---
+export interface AdminUser {
+  id: string;
+  name: string;
+  email: string;
+  role: Role;
+  createdAt: string;
+  transactionsCount: number;
+  goalsCount: number;
+}
+
+export interface AdminBadge {
+  id: string;
+  name: string;
+  description: string;
+  icon: string | null;
+  condition: BadgeCondition;
+  _count?: { userBadges: number };
+}
+
+export interface CreateBadgeRequest {
+  name: string;
+  description: string;
+  icon?: string;
+  condition: BadgeCondition;
+}
+
+export interface UpdateBadgeRequest {
+  name?: string;
+  description?: string;
+  icon?: string;
+  condition?: BadgeCondition;
 }

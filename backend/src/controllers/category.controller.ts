@@ -2,9 +2,9 @@ import { Request, Response } from "express";
 import categoryService from "../services/category.service";
 import { createCategorySchema, updateCategorySchema } from "../validators/category.validator";
 
-async function getAll(_req: Request, res: Response) {
+async function getAll(req: Request, res: Response) {
   try {
-    const categorias = await categoryService.getAll();
+    const categorias = await categoryService.getAll(req.userId);
     res.json(categorias);
   } catch (error: any) {
     res.status(500).json({ error: "Erro interno do servidor" });
@@ -13,7 +13,7 @@ async function getAll(_req: Request, res: Response) {
 
 async function getById(req: Request, res: Response) {
   try {
-    const categoria = await categoryService.getById(req.params.id);
+    const categoria = await categoryService.getById(req.userId, req.params.id as string);
     res.json(categoria);
   } catch (error: any) {
     if (error.message === "Categoria nao encontrada") {
@@ -27,7 +27,7 @@ async function getById(req: Request, res: Response) {
 async function create(req: Request, res: Response) {
   try {
     const dados = createCategorySchema.parse(req.body);
-    const categoria = await categoryService.create(dados.name, dados.icon);
+    const categoria = await categoryService.create(req.userId, dados.name, dados.icon);
     res.status(201).json(categoria);
   } catch (error: any) {
     if (error.name === "ZodError") {
@@ -45,7 +45,7 @@ async function create(req: Request, res: Response) {
 async function update(req: Request, res: Response) {
   try {
     const dados = updateCategorySchema.parse(req.body);
-    const categoria = await categoryService.update(req.params.id, dados);
+    const categoria = await categoryService.update(req.userId, req.params.id as string, dados);
     res.json(categoria);
   } catch (error: any) {
     if (error.name === "ZodError") {
@@ -67,14 +67,15 @@ async function update(req: Request, res: Response) {
 
 async function remove(req: Request, res: Response) {
   try {
-    await categoryService.remove(req.params.id);
+    await categoryService.remove(req.userId, req.params.id as string);
     res.json({ message: "Categoria removida com sucesso" });
   } catch (error: any) {
     if (error.message === "Categoria nao encontrada") {
       res.status(404).json({ error: error.message });
       return;
     }
-    if (error.message === "Categorias padrao nao podem ser removidas") {
+    if (error.message === "Categorias padrao nao podem ser removidas" ||
+        error.message === "Categoria em uso por transacoes e nao pode ser removida") {
       res.status(400).json({ error: error.message });
       return;
     }

@@ -7,5 +7,7 @@ const router = Router();
 router.get("/health-score", authMiddleware, analyticsController.getHealthScore);
 router.get("/insights", authMiddleware, analyticsController.getInsights);
 router.get("/forecast", authMiddleware, analyticsController.getBalanceForecast);
+router.get("/cashflow", authMiddleware, analyticsController.getCashflow);
+router.get("/comparison", authMiddleware, analyticsController.getMonthlyComparison);
 
 export default router;

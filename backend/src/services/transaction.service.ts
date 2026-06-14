@@ -26,7 +26,15 @@ function classificarCategoria(descricao: string): string | null {
   return null;
 }
 
-async function getAll(userId: string, filtros?: { type?: string; categoryId?: string; startDate?: string; endDate?: string }) {
+async function getAll(userId: string, filtros?: {
+  type?: string;
+  categoryId?: string;
+  startDate?: string;
+  endDate?: string;
+  search?: string;
+  page?: number;
+  limit?: number;
+}) {
   const where: any = { userId };
 
   if (filtros?.type) {
@@ -37,19 +45,38 @@ async function getAll(userId: string, filtros?: { type?: string; categoryId?: st
     where.categoryId = filtros.categoryId;
   }
 
+  if (filtros?.search) {
+    where.description = { contains: filtros.search, mode: "insensitive" };
+  }
+
   if (filtros?.startDate || filtros?.endDate) {
     where.date = {};
     if (filtros.startDate) where.date.gte = new Date(filtros.startDate);
     if (filtros?.endDate) where.date.lte = new Date(filtros.endDate);
   }
 
-  const transacoes = await prisma.transaction.findMany({
-    where,
-    include: { category: true },
-    orderBy: { date: "desc" },
-  });
+  const page = Math.max(1, filtros?.page ?? 1);
+  const limit = Math.min(100, Math.max(1, filtros?.limit ?? 20));
+  const skip = (page - 1) * limit;
 
-  return transacoes;
+  const [data, total] = await Promise.all([
+    prisma.transaction.findMany({
+      where,
+      include: { category: true },
+      orderBy: { date: "desc" },
+      skip,
+      take: limit,
+    }),
+    prisma.transaction.count({ where }),
+  ]);
+
+  return {
+    data,
+    total,
+    page,
+    limit,
+    totalPages: Math.ceil(total / limit) || 1,
+  };
 }
 
 async function getById(userId: string, id: string) {
@@ -78,8 +105,8 @@ async function create(userId: string, data: {
     const nomeCategoria = classificarCategoria(data.description);
 
     if (nomeCategoria) {
-      const categoria = await prisma.category.findUnique({
-        where: { name: nomeCategoria },
+      const categoria = await prisma.category.findFirst({
+        where: { name: nomeCategoria, userId: null },
       });
 
       if (categoria) {
@@ -88,8 +115,8 @@ async function create(userId: string, data: {
     }
 
     if (!categoryId) {
-      const outros = await prisma.category.findUnique({
-        where: { name: "Outros" },
+      const outros = await prisma.category.findFirst({
+        where: { name: "Outros", userId: null },
       });
 
       if (outros) {

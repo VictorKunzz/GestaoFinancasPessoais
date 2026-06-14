@@ -53,7 +53,7 @@ export default function CategoryPieChart({ categorias, totalGasto }: CategoryPie
                 ))}
               </Pie>
               <Tooltip
-                formatter={(value: number) => formatCurrency(value)}
+                formatter={(value) => formatCurrency(Number(value))}
                 contentStyle={{
                   background: '#1a1a3e',
                   border: '1px solid rgba(255,255,255,0.08)',

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Plus } from 'lucide-react';
-import type { Goal, CreateGoalRequest } from '../types';
+import type { Goal, CreateGoalRequest, CreateContributionRequest } from '../types';
 import * as goalService from '../services/goal.service';
 import * as badgeService from '../services/badge.service';
 import { useToast } from '../hooks/useToast';
@@ -9,6 +9,7 @@ import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
 import GoalCard from '../components/goals/GoalCard';
 import GoalModal from '../components/goals/GoalModal';
+import ContributionModal from '../components/goals/ContributionModal';
 
 export default function GoalsPage() {
   const { addToast } = useToast();
@@ -23,6 +24,9 @@ export default function GoalsPage() {
   // Delete confirmation
   const [deleteTarget, setDeleteTarget] = useState<Goal | null>(null);
   const [deleting, setDeleting] = useState(false);
+
+  // Aporte
+  const [contributeTarget, setContributeTarget] = useState<Goal | null>(null);
 
   useEffect(() => {
     loadGoals();
@@ -59,7 +63,7 @@ export default function GoalsPage() {
 
       if (Number(updated.savedAmount) >= Number(updated.targetAmount)) {
         try {
-          const badgeResult = await badgeService.check('goal_reached');
+          const badgeResult = await badgeService.check('GOAL_REACHED');
           if (badgeResult.awarded) addToast('badge', badgeResult.message);
         } catch (err) { console.error('Erro ao checar badge', err); }
       }
@@ -69,14 +73,24 @@ export default function GoalsPage() {
       addToast('success', 'Meta criada com sucesso!');
 
       try {
-        const badgeResult = await badgeService.check('first_goal');
+        const badgeResult = await badgeService.check('FIRST_GOAL');
         if (badgeResult.awarded) addToast('badge', badgeResult.message);
 
         if (Number(created.savedAmount) >= Number(created.targetAmount)) {
-          const reachedResult = await badgeService.check('goal_reached');
+          const reachedResult = await badgeService.check('GOAL_REACHED');
           if (reachedResult.awarded) addToast('badge', reachedResult.message);
         }
       } catch (err) { console.error('Erro ao checar badge', err); }
+    }
+  }
+
+  async function handleAddContribution(data: CreateContributionRequest) {
+    if (!contributeTarget) return;
+    const result = await goalService.addContribution(contributeTarget.id, data);
+    setGoals((prev) => prev.map((g) => (g.id === result.goal.id ? result.goal : g)));
+    addToast('success', 'Aporte registrado com sucesso!');
+    if (result.badge?.awarded && result.badge.badge) {
+      addToast('badge', `Parabéns! Você conquistou: ${result.badge.badge.name}`);
     }
   }
 
@@ -147,6 +161,7 @@ export default function GoalsPage() {
               goal={goal}
               onEdit={handleOpenEdit}
               onDelete={setDeleteTarget}
+              onContribute={setContributeTarget}
             />
           ))}
         </div>
@@ -158,6 +173,14 @@ export default function GoalsPage() {
         onClose={() => setModalOpen(false)}
         onSubmit={handleSubmit}
         goal={editingGoal}
+      />
+
+      {/* Aporte Modal */}
+      <ContributionModal
+        isOpen={!!contributeTarget}
+        onClose={() => setContributeTarget(null)}
+        onSubmit={handleAddContribution}
+        goal={contributeTarget}
       />
 
       {/* Delete Confirmation Modal */}

@@ -11,10 +11,13 @@ async function getAll(req: Request, res: Response) {
       categoryId: req.query.categoryId as string | undefined,
       startDate: req.query.startDate as string | undefined,
       endDate: req.query.endDate as string | undefined,
+      search: req.query.search as string | undefined,
+      page: req.query.page ? Number(req.query.page) : undefined,
+      limit: req.query.limit ? Number(req.query.limit) : undefined,
     };
 
-    const transacoes = await transactionService.getAll(userId, filtros);
-    res.json(transacoes);
+    const resultado = await transactionService.getAll(userId, filtros);
+    res.json(resultado);
   } catch (error: any) {
     res.status(500).json({ error: "Erro interno do servidor" });
   }
@@ -23,7 +26,7 @@ async function getAll(req: Request, res: Response) {
 async function getById(req: Request, res: Response) {
   try {
     const userId = (req as any).userId;
-    const transacao = await transactionService.getById(userId, req.params.id);
+    const transacao = await transactionService.getById(userId, req.params.id as string);
     res.json(transacao);
   } catch (error: any) {
     if (error.message === "Transacao nao encontrada") {
@@ -57,7 +60,7 @@ async function update(req: Request, res: Response) {
   try {
     const userId = (req as any).userId;
     const dados = updateTransactionSchema.parse(req.body);
-    const transacao = await transactionService.update(userId, req.params.id, dados);
+    const transacao = await transactionService.update(userId, req.params.id as string, dados);
     res.json(transacao);
   } catch (error: any) {
     if (error.name === "ZodError") {
@@ -75,7 +78,7 @@ async function update(req: Request, res: Response) {
 async function remove(req: Request, res: Response) {
   try {
     const userId = (req as any).userId;
-    await transactionService.remove(userId, req.params.id);
+    await transactionService.remove(userId, req.params.id as string);
     res.json({ message: "Transacao removida com sucesso" });
   } catch (error: any) {
     if (error.message === "Transacao nao encontrada") {

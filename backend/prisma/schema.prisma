@@ -9,25 +9,41 @@ datasource db {
   provider = "postgresql"
 }
 
-// Tabela de usuários
-model User {
-  id           String        @id @default(uuid())
-  name         String
-  email        String        @unique
-  passwordHash String
-  createdAt    DateTime      @default(now())
-  transactions Transaction[]
-  goals        Goal[]
-  badges       UserBadge[]
+// Papel do usuario no sistema (controle de acesso ao painel admin)
+enum Role {
+  USER
+  ADMIN
 }
 
-// Tabela de categorias (alimentação, transporte, lazer, etc)
+// Tabela de usuários
+model User {
+  id            String             @id @default(uuid())
+  name          String
+  email         String             @unique
+  passwordHash  String
+  role          Role               @default(USER)
+  createdAt     DateTime           @default(now())
+  transactions  Transaction[]
+  goals         Goal[]
+  badges        UserBadge[]
+  categories    Category[]
+  contributions GoalContribution[]
+  budgets       Budget[]
+}
+
+// Tabela de categorias (alimentação, transporte, lazer, etc).
+// userId null = categoria padrao do sistema (global); caso contrario, pertence ao usuario.
 model Category {
   id           String        @id @default(uuid())
-  name         String        @unique
+  name         String
   icon         String?
   isDefault    Boolean       @default(false)
+  userId       String?
+  user         User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
   transactions Transaction[]
+  budgets      Budget[]
+
+  @@unique([userId, name])
 }
 
 // Tipo da transação: receita ou despesa
@@ -48,27 +64,65 @@ model Transaction {
   createdAt   DateTime        @default(now())
   user        User            @relation(fields: [userId], references: [id])
   category    Category        @relation(fields: [categoryId], references: [id])
+
+  @@index([userId, date])
 }
 
 // Tabela de metas financeiras
 model Goal {
-  id           String    @id @default(uuid())
+  id            String             @id @default(uuid())
+  userId        String
+  name          String
+  targetAmount  Decimal
+  savedAmount   Decimal            @default(0)
+  deadline      DateTime?
+  createdAt     DateTime           @default(now())
+  user          User               @relation(fields: [userId], references: [id])
+  contributions GoalContribution[]
+}
+
+// Aportes de uma meta. Mantem o historico e alimenta Goal.savedAmount automaticamente.
+model GoalContribution {
+  id        String   @id @default(uuid())
+  goalId    String
+  userId    String
+  amount    Decimal
+  note      String?
+  date      DateTime @default(now())
+  createdAt DateTime @default(now())
+  goal      Goal     @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+// Orcamento mensal por categoria (alerta de estouro)
+model Budget {
+  id           String   @id @default(uuid())
   userId       String
-  name         String
-  targetAmount Decimal
-  savedAmount  Decimal   @default(0)
-  deadline     DateTime?
-  createdAt    DateTime  @default(now())
-  user         User      @relation(fields: [userId], references: [id])
+  categoryId   String
+  monthlyLimit Decimal
+  createdAt    DateTime @default(now())
+  user         User     @relation(fields: [userId], references: [id])
+  category     Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, categoryId])
+}
+
+// Conjunto fixo de regras de conquista. O painel admin escolhe uma destas ao criar/editar badges.
+enum BadgeCondition {
+  FIRST_TRANSACTION
+  FIRST_GOAL
+  GOAL_REACHED
+  POSITIVE_MONTH
+  SPENT_LESS
 }
 
 // Tabela de medalhas disponíveis no sistema
 model Badge {
-  id          String      @id @default(uuid())
+  id          String         @id @default(uuid())
   name        String
   description String
   icon        String?
-  condition   String      // ex: "first_transaction", "goal_reached"
+  condition   BadgeCondition
   userBadges  UserBadge[]
 }
 

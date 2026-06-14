@@ -1,5 +1,6 @@
 import { z } from "zod";
+import { BadgeCondition } from "../generated/prisma/enums";
 
 export const checkBadgeSchema = z.object({
-  condition: z.string().min(1, "Condição é obrigatória"),
+  condition: z.nativeEnum(BadgeCondition),
 });

@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo } from 'react';
-import { Plus } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Plus, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { Transaction, TransactionType, Category, CreateTransactionRequest } from '../types';
 import * as transactionService from '../services/transaction.service';
 import * as categoryService from '../services/category.service';
@@ -12,17 +12,27 @@ import FilterBar from '../components/transactions/FilterBar';
 import TransactionTable from '../components/transactions/TransactionTable';
 import TransactionModal from '../components/transactions/TransactionModal';
 
+const PAGE_SIZE = 10;
+
 export default function TransactionsPage() {
   const { addToast } = useToast();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+  const [firstLoad, setFirstLoad] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Filters
+  // Filters (server-side)
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState<TransactionType | ''>('');
   const [categoryFilter, setCategoryFilter] = useState('');
+
+  // Pagination
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // Modal state
   const [modalOpen, setModalOpen] = useState(false);
@@ -32,47 +42,73 @@ export default function TransactionsPage() {
   const [deleteTarget, setDeleteTarget] = useState<Transaction | null>(null);
   const [deleting, setDeleting] = useState(false);
 
+  // Categorias carregam uma vez
   useEffect(() => {
-    loadData();
+    categoryService.getAll().then(setCategories).catch(() => {});
   }, []);
 
-  async function loadData() {
-    try {
-      setLoading(true);
-      setError(null);
-      const [transData, catData] = await Promise.all([
-        transactionService.getAll(),
-        categoryService.getAll(),
-      ]);
-      setTransactions(transData);
-      setCategories(catData);
-    } catch {
-      setError('Erro ao carregar transações.');
-    } finally {
-      setLoading(false);
+  // Debounce da busca
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 350);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  // Refetch quando filtros/página mudam
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      try {
+        setLoading(true);
+        setError(null);
+        const res = await transactionService.getAll({
+          search: debouncedSearch || undefined,
+          type: typeFilter || undefined,
+          categoryId: categoryFilter || undefined,
+          page,
+          limit: PAGE_SIZE,
+        });
+        if (cancelled) return;
+        // Se a página ficou vazia após exclusão, volta uma página
+        if (res.data.length === 0 && res.total > 0 && page > 1) {
+          setPage(page - 1);
+          return;
+        }
+        setTransactions(res.data);
+        setTotal(res.total);
+        setTotalPages(res.totalPages);
+      } catch {
+        if (!cancelled) setError('Erro ao carregar transações.');
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+          setFirstLoad(false);
+        }
+      }
     }
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [debouncedSearch, typeFilter, categoryFilter, page, refreshKey]);
+
+  function reload() {
+    setRefreshKey((k) => k + 1);
   }
 
-  const filteredTransactions = useMemo(() => {
-    let result = [...transactions];
+  function handleSearchChange(value: string) {
+    setSearch(value);
+    setPage(1);
+  }
 
-    if (search) {
-      const term = search.toLowerCase();
-      result = result.filter((t) => t.description.toLowerCase().includes(term));
-    }
+  function handleTypeChange(value: TransactionType | '') {
+    setTypeFilter(value);
+    setPage(1);
+  }
 
-    if (typeFilter) {
-      result = result.filter((t) => t.type === typeFilter);
-    }
-
-    if (categoryFilter) {
-      result = result.filter((t) => t.categoryId === categoryFilter);
-    }
-
-    result.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-
-    return result;
-  }, [transactions, search, typeFilter, categoryFilter]);
+  function handleCategoryChange(value: string) {
+    setCategoryFilter(value);
+    setPage(1);
+  }
 
   function handleOpenCreate() {
     setEditingTransaction(null);
@@ -86,18 +122,17 @@ export default function TransactionsPage() {
 
   async function handleSubmit(data: CreateTransactionRequest) {
     if (editingTransaction) {
-      const updated = await transactionService.update(editingTransaction.id, data);
-      setTransactions((prev) =>
-        prev.map((t) => (t.id === updated.id ? updated : t))
-      );
+      await transactionService.update(editingTransaction.id, data);
       addToast('success', 'Transação atualizada com sucesso!');
+      reload();
     } else {
-      const created = await transactionService.create(data);
-      setTransactions((prev) => [created, ...prev]);
+      await transactionService.create(data);
       addToast('success', 'Transação criada com sucesso!');
+      setPage(1);
+      reload();
 
       try {
-        const badgeResult = await badgeService.check('first_transaction');
+        const badgeResult = await badgeService.check('FIRST_TRANSACTION');
         if (badgeResult.awarded) {
           addToast('badge', badgeResult.message);
         }
@@ -112,9 +147,9 @@ export default function TransactionsPage() {
     setDeleting(true);
     try {
       await transactionService.remove(deleteTarget.id);
-      setTransactions((prev) => prev.filter((t) => t.id !== deleteTarget.id));
       setDeleteTarget(null);
       addToast('success', 'Transação removida com sucesso!');
+      reload();
     } catch {
       addToast('error', 'Erro ao remover transação.');
     } finally {
@@ -122,7 +157,7 @@ export default function TransactionsPage() {
     }
   }
 
-  if (loading) {
+  if (firstLoad && loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <LoadingSpinner size="lg" />
@@ -148,7 +183,7 @@ export default function TransactionsPage() {
         <div>
           <h2 className="text-2xl font-bold text-text-primary">Transações</h2>
           <p className="text-text-secondary text-sm mt-1">
-            {filteredTransactions.length} transação{filteredTransactions.length !== 1 ? 'ões' : ''} encontrada{filteredTransactions.length !== 1 ? 's' : ''}
+            {total} transação{total !== 1 ? 'ões' : ''} encontrada{total !== 1 ? 's' : ''}
           </p>
         </div>
         <Button onClick={handleOpenCreate}>
@@ -160,20 +195,49 @@ export default function TransactionsPage() {
       {/* Filters */}
       <FilterBar
         search={search}
-        onSearchChange={setSearch}
+        onSearchChange={handleSearchChange}
         typeFilter={typeFilter}
-        onTypeChange={setTypeFilter}
+        onTypeChange={handleTypeChange}
         categoryFilter={categoryFilter}
-        onCategoryChange={setCategoryFilter}
+        onCategoryChange={handleCategoryChange}
         categories={categories}
       />
 
       {/* Table */}
       <TransactionTable
-        transactions={filteredTransactions}
+        transactions={transactions}
         onEdit={handleOpenEdit}
         onDelete={setDeleteTarget}
       />
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-text-muted">
+            Página {page} de {totalPages}
+          </p>
+          <div className="flex gap-2">
+            <Button
+              variant="secondary"
+              size="sm"
+              disabled={page <= 1 || loading}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+            >
+              <ChevronLeft size={16} />
+              Anterior
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              disabled={page >= totalPages || loading}
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            >
+              Próxima
+              <ChevronRight size={16} />
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Create/Edit Modal */}
       <TransactionModal
