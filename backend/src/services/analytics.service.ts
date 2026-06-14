@@ -35,7 +35,7 @@ async function getHealthScore(userId: string) {
       totalDespesas: 0,
       saldo: 0,
       percentualGasto: 0,
-      mensagem: "Sem transacoes neste mes. Comece registrando suas receitas e despesas!",
+      mensagem: "Sem transações neste mês. Comece registrando suas receitas e despesas!",
     };
   }
 
@@ -72,16 +72,16 @@ async function getHealthScore(userId: string) {
 
   if (score >= 80) {
     nivel = "Excelente";
-    mensagem = "Parabens! Voce esta gastando bem menos do que ganha. Continue assim!";
+    mensagem = "Parabéns! Você está gastando bem menos do que ganha. Continue assim!";
   } else if (score >= 60) {
     nivel = "Bom";
-    mensagem = "Voce esta no caminho certo, mas pode melhorar. Tente reduzir alguns gastos.";
+    mensagem = "Você está no caminho certo, mas pode melhorar. Tente reduzir alguns gastos.";
   } else if (score >= 40) {
     nivel = "Regular";
-    mensagem = "Cuidado! Seus gastos estao chegando perto da sua renda. Revise seus habitos.";
+    mensagem = "Cuidado! Seus gastos estão chegando perto da sua renda. Revise seus hábitos.";
   } else {
-    nivel = "Critico";
-    mensagem = "Atencao! Voce esta gastando mais do que ganha. Reduza despesas urgentemente.";
+    nivel = "Crítico";
+    mensagem = "Atenção! Você está gastando mais do que ganha. Reduza despesas urgentemente.";
   }
 
   return {
@@ -145,15 +145,15 @@ async function getInsights(userId: string) {
 
   if (categoriasComPercentual.length > 0) {
     const maiorGasto = categoriasComPercentual[0];
-    dicas.push(`Sua maior categoria de gasto e "${maiorGasto.nome}" com ${maiorGasto.percentual}% do total.`);
+    dicas.push(`Sua maior categoria de gasto é "${maiorGasto.nome}" com ${maiorGasto.percentual}% do total.`);
   }
 
   if (categoriasComPercentual.length >= 3) {
-    dicas.push(`Voce tem gastos em ${categoriasComPercentual.length} categorias diferentes este mes.`);
+    dicas.push(`Você tem gastos em ${categoriasComPercentual.length} categorias diferentes este mês.`);
   }
 
   if (totalGasto === 0) {
-    dicas.push("Nenhuma despesa registrada neste mes.");
+    dicas.push("Nenhuma despesa registrada neste mês.");
   }
 
   return {
@@ -184,7 +184,7 @@ async function getBalanceForecast(userId: string) {
       previsaoReceita: 0,
       previsaoDespesa: 0,
       previsaoSaldo: 0,
-      mensagem: "Sem dados suficientes para fazer uma previsao. Continue registrando!",
+      mensagem: "Sem dados suficientes para fazer uma previsão. Continue registrando!",
     };
   }
 
