@@ -1,13 +1,10 @@
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import type { MonthlyComparison } from '../../types';
+import { formatCurrency } from '../../lib/format';
 import Card from '../ui/Card';
 
 interface ComparisonCardProps {
   data: MonthlyComparison;
-}
-
-function formatCurrency(value: number): string {
-  return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
 export default function ComparisonCard({ data }: ComparisonCardProps) {

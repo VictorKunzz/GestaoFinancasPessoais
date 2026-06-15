@@ -10,14 +10,11 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import type { CashflowPoint } from '../../types';
+import { formatCurrency } from '../../lib/format';
 import Card from '../ui/Card';
 
 interface CashflowChartProps {
   meses: CashflowPoint[];
-}
-
-function formatCurrency(value: number): string {
-  return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
 function formatCompact(value: number): string {
@@ -25,7 +22,7 @@ function formatCompact(value: number): string {
 }
 
 export default function CashflowChart({ meses }: CashflowChartProps) {
-  const temDados = meses.some((m) => m.receitas > 0 || m.despesas > 0);
+  const temDados = meses.some((m) => m.receitas > 0 || m.despesas > 0 || m.investimentos > 0);
 
   return (
     <Card>
@@ -61,8 +58,9 @@ export default function CashflowChart({ meses }: CashflowChartProps) {
                 cursor={{ fill: 'rgba(255,255,255,0.04)' }}
               />
               <Legend wrapperStyle={{ fontSize: '12px' }} />
-              <Bar dataKey="receitas" name="Receitas" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={28} />
-              <Bar dataKey="despesas" name="Despesas" fill="#f43f5e" radius={[4, 4, 0, 0]} maxBarSize={28} />
+              <Bar dataKey="receitas" name="Receitas" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={24} />
+              <Bar dataKey="despesas" name="Despesas" fill="#f43f5e" radius={[4, 4, 0, 0]} maxBarSize={24} />
+              <Bar dataKey="investimentos" name="Investimentos" fill="#3b82f6" radius={[4, 4, 0, 0]} maxBarSize={24} />
               <Line type="monotone" dataKey="saldo" name="Saldo" stroke="#8b5cf6" strokeWidth={2} dot={{ r: 3 }} />
             </ComposedChart>
           </ResponsiveContainer>

@@ -4,7 +4,7 @@ import { checkBadgeSchema } from "../validators/badge.validator";
 
 async function getAllBadges(req: Request, res: Response) {
   try {
-    const userId = (req as any).userId;
+    const userId = req.userId;
     const medalhas = await badgeService.getAllBadges(userId);
     res.json(medalhas);
   } catch (error: any) {
@@ -14,7 +14,7 @@ async function getAllBadges(req: Request, res: Response) {
 
 async function getUserBadges(req: Request, res: Response) {
   try {
-    const userId = (req as any).userId;
+    const userId = req.userId;
     const conquistas = await badgeService.getUserBadges(userId);
     res.json(conquistas);
   } catch (error: any) {
@@ -24,7 +24,7 @@ async function getUserBadges(req: Request, res: Response) {
 
 async function checkAndAwardBadge(req: Request, res: Response) {
   try {
-    const userId = (req as any).userId;
+    const userId = req.userId;
     const dados = checkBadgeSchema.parse(req.body);
     
     const result = await badgeService.checkAndAwardBadge(userId, dados.condition);

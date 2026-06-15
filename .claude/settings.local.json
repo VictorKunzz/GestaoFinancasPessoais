@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node -e \"require\\('dotenv'\\).config\\(\\); console.log\\('JWT_SECRET set:', !!process.env.JWT_SECRET\\); console.log\\('DATABASE_URL set:', !!process.env.DATABASE_URL\\)\")",
+      "Bash(npx prisma *)",
+      "Bash(npx tsc *)",
+      "Bash(npm run *)",
+      "Bash(echo \"EXIT: $?\")",
+      "Bash(npx eslint *)",
+      "PowerShell(Set-Location \"C:\\\\Users\\\\viche\\\\OneDrive\\\\Documentos\\\\GitHub\\\\GestaoFinancasPessoais\\\\backend\"; npx prisma migrate deploy; \"MIGRATE_EXIT: $LASTEXITCODE\"; npx prisma generate; \"GENERATE_EXIT: $LASTEXITCODE\")"
+    ]
+  }
+}

@@ -7,11 +7,9 @@ import { useToast } from '../hooks/useToast';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
+import EntityIcon from '../lib/icons';
+import { formatCurrency } from '../lib/format';
 import BudgetModal from '../components/budgets/BudgetModal';
-
-function formatCurrency(value: number): string {
-  return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-}
 
 function barColor(budget: Budget): string {
   if (budget.exceeded) return 'bg-accent-rose';
@@ -146,11 +144,7 @@ export default function BudgetsPage() {
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-accent-violet/15 text-accent-violet shrink-0">
-                    {budget.category.icon ? (
-                      <span className="text-lg leading-none">{budget.category.icon}</span>
-                    ) : (
-                      <Wallet size={18} />
-                    )}
+                    <EntityIcon value={budget.category.icon} fallback={Wallet} />
                   </div>
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-text-primary truncate">{budget.category.name}</p>

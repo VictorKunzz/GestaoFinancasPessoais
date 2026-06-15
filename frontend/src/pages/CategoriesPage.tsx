@@ -6,6 +6,7 @@ import { useToast } from '../hooks/useToast';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
+import EntityIcon from '../lib/icons';
 import CategoryModal from '../components/categories/CategoryModal';
 
 export default function CategoriesPage() {
@@ -137,11 +138,7 @@ export default function CategoriesPage() {
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-accent-violet/15 text-accent-violet shrink-0">
-                    {category.icon ? (
-                      <span className="text-lg leading-none">{category.icon}</span>
-                    ) : (
-                      <Tag size={18} />
-                    )}
+                    <EntityIcon value={category.icon} fallback={Tag} />
                   </div>
                   <span className="text-sm font-medium text-text-primary truncate">
                     {category.name}
@@ -182,7 +179,7 @@ export default function CategoriesPage() {
             >
               <div className="flex items-center gap-3 min-w-0">
                 <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-bg-card text-text-muted shrink-0">
-                  <Tag size={18} />
+                  <EntityIcon value={category.icon} fallback={Tag} />
                 </div>
                 <span className="text-sm font-medium text-text-secondary truncate">
                   {category.name}

@@ -4,7 +4,7 @@ import { createTransactionSchema, updateTransactionSchema } from "../validators/
 
 async function getAll(req: Request, res: Response) {
   try {
-    const userId = (req as any).userId;
+    const userId = req.userId;
 
     const filtros = {
       type: req.query.type as string | undefined,
@@ -25,7 +25,7 @@ async function getAll(req: Request, res: Response) {
 
 async function getById(req: Request, res: Response) {
   try {
-    const userId = (req as any).userId;
+    const userId = req.userId;
     const transacao = await transactionService.getById(userId, req.params.id as string);
     res.json(transacao);
   } catch (error: any) {
@@ -39,7 +39,7 @@ async function getById(req: Request, res: Response) {
 
 async function create(req: Request, res: Response) {
   try {
-    const userId = (req as any).userId;
+    const userId = req.userId;
     const dados = createTransactionSchema.parse(req.body);
     const transacao = await transactionService.create(userId, dados);
     res.status(201).json(transacao);
@@ -48,7 +48,7 @@ async function create(req: Request, res: Response) {
       res.status(400).json({ error: error.errors });
       return;
     }
-    if (error.message === "Categoria nao encontrada") {
+    if (error.message === "Categoria nao encontrada" || error.message === "Meta nao encontrada") {
       res.status(400).json({ error: error.message });
       return;
     }
@@ -58,7 +58,7 @@ async function create(req: Request, res: Response) {
 
 async function update(req: Request, res: Response) {
   try {
-    const userId = (req as any).userId;
+    const userId = req.userId;
     const dados = updateTransactionSchema.parse(req.body);
     const transacao = await transactionService.update(userId, req.params.id as string, dados);
     res.json(transacao);
@@ -71,13 +71,17 @@ async function update(req: Request, res: Response) {
       res.status(404).json({ error: error.message });
       return;
     }
+    if (error.message === "Meta nao encontrada") {
+      res.status(400).json({ error: error.message });
+      return;
+    }
     res.status(500).json({ error: "Erro interno do servidor" });
   }
 }
 
 async function remove(req: Request, res: Response) {
   try {
-    const userId = (req as any).userId;
+    const userId = req.userId;
     await transactionService.remove(userId, req.params.id as string);
     res.json({ message: "Transacao removida com sucesso" });
   } catch (error: any) {

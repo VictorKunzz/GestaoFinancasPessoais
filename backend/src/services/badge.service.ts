@@ -48,6 +48,7 @@ async function somaPorTipo(userId: string, tipo: "INCOME" | "EXPENSE", inicio: D
     where: {
       userId,
       type: tipo as any,
+      goalId: null,
       date: { gte: inicio, lt: fim },
     },
   });

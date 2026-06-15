@@ -4,6 +4,7 @@ import { useToast } from '../../hooks/useToast';
 import Modal from '../ui/Modal';
 import Input from '../ui/Input';
 import Button from '../ui/Button';
+import { CATEGORY_ICONS } from '../../lib/icons';
 
 interface CategoryModalProps {
   isOpen: boolean;
@@ -74,13 +75,32 @@ export default function CategoryModal({ isOpen, onClose, onSubmit, category }: C
           onChange={(e) => setName(e.target.value)}
         />
 
-        <Input
-          label="Ícone (emoji, opcional)"
-          placeholder="Ex: 🐶"
-          value={icon}
-          onChange={(e) => setIcon(e.target.value)}
-          maxLength={4}
-        />
+        <div className="w-full">
+          <label className="block text-sm font-medium text-text-secondary mb-1.5">
+            Ícone (opcional)
+          </label>
+          <div className="grid grid-cols-6 gap-2">
+            {CATEGORY_ICONS.map(({ slug, Icon }) => {
+              const selected = icon === slug;
+              return (
+                <button
+                  key={slug}
+                  type="button"
+                  onClick={() => setIcon(selected ? '' : slug)}
+                  aria-label={slug}
+                  aria-pressed={selected}
+                  className={`flex items-center justify-center aspect-square rounded-lg border transition-colors cursor-pointer ${
+                    selected
+                      ? 'border-accent-violet bg-accent-violet/15 text-accent-violet'
+                      : 'border-border-default bg-bg-input text-text-muted hover:text-text-primary hover:border-border-hover'
+                  }`}
+                >
+                  <Icon size={18} />
+                </button>
+              );
+            })}
+          </div>
+        </div>
 
         {error && <p className="text-sm text-accent-rose">{error}</p>}
 

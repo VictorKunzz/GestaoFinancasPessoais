@@ -4,6 +4,7 @@ import { useToast } from '../../hooks/useToast';
 import Modal from '../ui/Modal';
 import Input from '../ui/Input';
 import Button from '../ui/Button';
+import { badgeIconByCondition } from '../../lib/icons';
 
 interface BadgeModalProps {
   isOpen: boolean;
@@ -24,7 +25,6 @@ export default function BadgeModal({ isOpen, onClose, onSubmit, badge }: BadgeMo
   const { addToast } = useToast();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [icon, setIcon] = useState('');
   const [condition, setCondition] = useState<BadgeCondition>('FIRST_TRANSACTION');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -35,12 +35,10 @@ export default function BadgeModal({ isOpen, onClose, onSubmit, badge }: BadgeMo
     if (badge) {
       setName(badge.name);
       setDescription(badge.description);
-      setIcon(badge.icon || '');
       setCondition(badge.condition);
     } else {
       setName('');
       setDescription('');
-      setIcon('');
       setCondition('FIRST_TRANSACTION');
     }
     setError('');
@@ -64,7 +62,6 @@ export default function BadgeModal({ isOpen, onClose, onSubmit, badge }: BadgeMo
       await onSubmit({
         name: name.trim(),
         description: description.trim(),
-        icon: icon.trim() || undefined,
         condition,
       });
       onClose();
@@ -79,6 +76,8 @@ export default function BadgeModal({ isOpen, onClose, onSubmit, badge }: BadgeMo
       setIsLoading(false);
     }
   }
+
+  const ConditionIcon = badgeIconByCondition[condition];
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={isEditing ? 'Editar Badge' : 'Nova Badge'}>
@@ -97,30 +96,30 @@ export default function BadgeModal({ isOpen, onClose, onSubmit, badge }: BadgeMo
           onChange={(e) => setDescription(e.target.value)}
         />
 
-        <Input
-          label="Ícone (emoji, opcional)"
-          placeholder="Ex: 🏆"
-          value={icon}
-          onChange={(e) => setIcon(e.target.value)}
-          maxLength={4}
-        />
-
         <div className="w-full">
           <label htmlFor="badge-condition" className="block text-sm font-medium text-text-secondary mb-1.5">
             Condição (regra de conquista)
           </label>
-          <select
-            id="badge-condition"
-            value={condition}
-            onChange={(e) => setCondition(e.target.value as BadgeCondition)}
-            className="w-full bg-bg-input border border-border-default rounded-xl px-4 py-2.5 text-sm text-text-primary focus:outline-none focus:border-accent-violet focus:ring-1 focus:ring-accent-violet/30 transition-all duration-200 cursor-pointer"
-          >
-            {CONDITION_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center w-11 h-11 rounded-xl bg-accent-amber/15 text-accent-amber shrink-0">
+              <ConditionIcon size={20} />
+            </div>
+            <select
+              id="badge-condition"
+              value={condition}
+              onChange={(e) => setCondition(e.target.value as BadgeCondition)}
+              className="w-full bg-bg-input border border-border-default rounded-xl px-4 py-2.5 text-sm text-text-primary focus:outline-none focus:border-accent-violet focus:ring-1 focus:ring-accent-violet/30 transition-all duration-200 cursor-pointer"
+            >
+              {CONDITION_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <p className="text-[11px] text-text-muted mt-1.5">
+            O ícone da conquista é definido automaticamente pela condição.
+          </p>
         </div>
 
         {error && <p className="text-sm text-accent-rose">{error}</p>}

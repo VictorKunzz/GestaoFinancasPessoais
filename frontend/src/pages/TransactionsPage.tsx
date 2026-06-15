@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Plus, ChevronLeft, ChevronRight } from 'lucide-react';
-import type { Transaction, TransactionType, Category, CreateTransactionRequest } from '../types';
+import type { Transaction, TransactionType, Category, Goal, CreateTransactionRequest } from '../types';
 import * as transactionService from '../services/transaction.service';
 import * as categoryService from '../services/category.service';
+import * as goalService from '../services/goal.service';
 import * as badgeService from '../services/badge.service';
 import { useToast } from '../hooks/useToast';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
@@ -18,6 +19,7 @@ export default function TransactionsPage() {
   const { addToast } = useToast();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [goals, setGoals] = useState<Goal[]>([]);
   const [loading, setLoading] = useState(true);
   const [firstLoad, setFirstLoad] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -42,9 +44,10 @@ export default function TransactionsPage() {
   const [deleteTarget, setDeleteTarget] = useState<Transaction | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  // Categorias carregam uma vez
+  // Categorias e metas carregam uma vez
   useEffect(() => {
     categoryService.getAll().then(setCategories).catch(() => {});
+    goalService.getAll().then(setGoals).catch(() => {});
   }, []);
 
   // Debounce da busca
@@ -136,6 +139,18 @@ export default function TransactionsPage() {
         if (badgeResult.awarded) {
           addToast('badge', badgeResult.message);
         }
+      } catch (err) {
+        console.error('Erro ao checar badge', err);
+      }
+    }
+
+    // Despesa vinculada a meta altera o valor economizado: recarrega metas
+    // e verifica se a meta foi atingida.
+    if (data.goalId) {
+      goalService.getAll().then(setGoals).catch(() => {});
+      try {
+        const reached = await badgeService.check('GOAL_REACHED');
+        if (reached.awarded) addToast('badge', reached.message);
       } catch (err) {
         console.error('Erro ao checar badge', err);
       }
@@ -245,6 +260,7 @@ export default function TransactionsPage() {
         onClose={() => setModalOpen(false)}
         onSubmit={handleSubmit}
         categories={categories}
+        goals={goals}
         transaction={editingTransaction}
       />
 

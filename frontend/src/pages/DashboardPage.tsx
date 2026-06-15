@@ -99,6 +99,7 @@ export default function DashboardPage() {
         <BalanceSummary
           totalReceitas={healthScore.totalReceitas}
           totalDespesas={healthScore.totalDespesas}
+          totalInvestimentos={healthScore.totalInvestimentos}
           saldo={healthScore.saldo}
         />
       )}

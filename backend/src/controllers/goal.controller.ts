@@ -4,7 +4,7 @@ import { createGoalSchema, updateGoalSchema } from "../validators/goal.validator
 
 async function getAll(req: Request, res: Response) {
   try {
-    const userId = (req as any).userId;
+    const userId = req.userId;
     const metas = await goalService.getAll(userId);
     res.json(metas);
   } catch (error: any) {
@@ -14,7 +14,7 @@ async function getAll(req: Request, res: Response) {
 
 async function getById(req: Request, res: Response) {
   try {
-    const userId = (req as any).userId;
+    const userId = req.userId;
     const meta = await goalService.getById(userId, req.params.id as string);
     res.json(meta);
   } catch (error: any) {
@@ -28,7 +28,7 @@ async function getById(req: Request, res: Response) {
 
 async function create(req: Request, res: Response) {
   try {
-    const userId = (req as any).userId;
+    const userId = req.userId;
     const dados = createGoalSchema.parse(req.body);
     const meta = await goalService.create(userId, dados);
     res.status(201).json(meta);
@@ -43,7 +43,7 @@ async function create(req: Request, res: Response) {
 
 async function update(req: Request, res: Response) {
   try {
-    const userId = (req as any).userId;
+    const userId = req.userId;
     const dados = updateGoalSchema.parse(req.body);
     const meta = await goalService.update(userId, req.params.id as string, dados);
     res.json(meta);
@@ -62,7 +62,7 @@ async function update(req: Request, res: Response) {
 
 async function remove(req: Request, res: Response) {
   try {
-    const userId = (req as any).userId;
+    const userId = req.userId;
     await goalService.remove(userId, req.params.id as string);
     res.json({ message: "Meta removida com sucesso" });
   } catch (error: any) {

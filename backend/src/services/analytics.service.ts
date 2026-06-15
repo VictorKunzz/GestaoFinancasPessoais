@@ -5,9 +5,11 @@ async function getHealthScore(userId: string) {
   const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
   const fimMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
 
+  // goalId: null exclui aportes de meta — eles contam como economia, nao despesa
   const transacoesMes = await prisma.transaction.findMany({
     where: {
       userId,
+      goalId: null,
       date: {
         gte: inicioMes,
         lte: fimMes,
@@ -17,29 +19,34 @@ async function getHealthScore(userId: string) {
 
   let totalReceitas = 0;
   let totalDespesas = 0;
+  let totalInvestimentos = 0;
 
   transacoesMes.forEach((t) => {
     const valor = Number(t.amount);
     if (t.type === "INCOME") {
       totalReceitas += valor;
-    } else {
+    } else if (t.type === "INVESTMENT") {
+      totalInvestimentos += valor;
+    } else if (t.type === "EXPENSE") {
       totalDespesas += valor;
     }
   });
 
-  if (totalReceitas === 0 && totalDespesas === 0) {
+  if (totalReceitas === 0 && totalDespesas === 0 && totalInvestimentos === 0) {
     return {
       score: 50,
       nivel: "Neutro",
       totalReceitas: 0,
       totalDespesas: 0,
+      totalInvestimentos: 0,
       saldo: 0,
       percentualGasto: 0,
       mensagem: "Sem transações neste mês. Comece registrando suas receitas e despesas!",
     };
   }
 
-  const saldo = totalReceitas - totalDespesas;
+  // Investimentos reduzem o saldo disponivel (dinheiro alocado), mas nao penalizam o score de gastos
+  const saldo = totalReceitas - totalDespesas - totalInvestimentos;
   const percentualGasto = totalReceitas > 0 ? (totalDespesas / totalReceitas) * 100 : 100;
 
   let score = 0;
@@ -89,6 +96,7 @@ async function getHealthScore(userId: string) {
     nivel,
     totalReceitas,
     totalDespesas,
+    totalInvestimentos,
     saldo,
     percentualGasto: Math.round(percentualGasto),
     mensagem,
@@ -104,6 +112,7 @@ async function getInsights(userId: string) {
     where: {
       userId,
       type: "EXPENSE",
+      goalId: null,
       date: {
         gte: inicioMes,
         lte: fimMes,
@@ -172,6 +181,7 @@ async function getBalanceForecast(userId: string) {
   const transacoes = await prisma.transaction.findMany({
     where: {
       userId,
+      goalId: null,
       date: {
         gte: tresMesesAtras,
         lte: hoje,
@@ -183,6 +193,7 @@ async function getBalanceForecast(userId: string) {
     return {
       previsaoReceita: 0,
       previsaoDespesa: 0,
+      previsaoInvestimento: 0,
       previsaoSaldo: 0,
       mensagem: "Sem dados suficientes para fazer uma previsão. Continue registrando!",
     };
@@ -190,12 +201,15 @@ async function getBalanceForecast(userId: string) {
 
   let totalReceitas = 0;
   let totalDespesas = 0;
+  let totalInvestimentos = 0;
 
   transacoes.forEach((t) => {
     const valor = Number(t.amount);
     if (t.type === "INCOME") {
       totalReceitas += valor;
-    } else {
+    } else if (t.type === "INVESTMENT") {
+      totalInvestimentos += valor;
+    } else if (t.type === "EXPENSE") {
       totalDespesas += valor;
     }
   });
@@ -203,7 +217,9 @@ async function getBalanceForecast(userId: string) {
   const mesesComDados = 3;
   const mediaReceita = totalReceitas / mesesComDados;
   const mediaDespesa = totalDespesas / mesesComDados;
-  const mediaSaldo = mediaReceita - mediaDespesa;
+  const mediaInvestimento = totalInvestimentos / mesesComDados;
+  // Investimentos sao deduzidos do saldo previsto (dinheiro que sai do disponivel)
+  const mediaSaldo = mediaReceita - mediaDespesa - mediaInvestimento;
 
   let mensagem = "";
 
@@ -218,6 +234,7 @@ async function getBalanceForecast(userId: string) {
   return {
     previsaoReceita: Math.round(mediaReceita * 100) / 100,
     previsaoDespesa: Math.round(mediaDespesa * 100) / 100,
+    previsaoInvestimento: Math.round(mediaInvestimento * 100) / 100,
     previsaoSaldo: Math.round(mediaSaldo * 100) / 100,
     mensagem,
   };
@@ -232,15 +249,15 @@ async function getCashflow(userId: string, meses = 6) {
   const fim = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0, 23, 59, 59);
 
   const transacoes = await prisma.transaction.findMany({
-    where: { userId, date: { gte: inicio, lte: fim } },
+    where: { userId, goalId: null, date: { gte: inicio, lte: fim } },
     select: { type: true, amount: true, date: true },
   });
 
-  const buckets: Record<string, { receitas: number; despesas: number }> = {};
+  const buckets: Record<string, { receitas: number; despesas: number; investimentos: number }> = {};
   for (let i = 0; i < meses; i++) {
     const d = new Date(hoje.getFullYear(), hoje.getMonth() - (meses - 1) + i, 1);
     const chave = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-    buckets[chave] = { receitas: 0, despesas: 0 };
+    buckets[chave] = { receitas: 0, despesas: 0, investimentos: 0 };
   }
 
   transacoes.forEach((t) => {
@@ -251,7 +268,9 @@ async function getCashflow(userId: string, meses = 6) {
     const valor = Number(t.amount);
     if (t.type === "INCOME") {
       bucket.receitas += valor;
-    } else {
+    } else if (t.type === "INVESTMENT") {
+      bucket.investimentos += valor;
+    } else if (t.type === "EXPENSE") {
       bucket.despesas += valor;
     }
   });
@@ -263,7 +282,8 @@ async function getCashflow(userId: string, meses = 6) {
       label: MESES_CURTOS[mesIndex] ?? chave,
       receitas: Math.round(v.receitas * 100) / 100,
       despesas: Math.round(v.despesas * 100) / 100,
-      saldo: Math.round((v.receitas - v.despesas) * 100) / 100,
+      investimentos: Math.round(v.investimentos * 100) / 100,
+      saldo: Math.round((v.receitas - v.despesas - v.investimentos) * 100) / 100,
     };
   });
 
@@ -281,11 +301,11 @@ async function getMonthlyComparison(userId: string) {
   const [despesasMes, despesasAnteriores] = await Promise.all([
     prisma.transaction.aggregate({
       _sum: { amount: true },
-      where: { userId, type: "EXPENSE", date: { gte: inicioMesAtual, lte: fimMesAtual } },
+      where: { userId, type: "EXPENSE", goalId: null, date: { gte: inicioMesAtual, lte: fimMesAtual } },
     }),
     prisma.transaction.aggregate({
       _sum: { amount: true },
-      where: { userId, type: "EXPENSE", date: { gte: inicioAnteriores, lte: fimAnteriores } },
+      where: { userId, type: "EXPENSE", goalId: null, date: { gte: inicioAnteriores, lte: fimAnteriores } },
     }),
   ]);
 

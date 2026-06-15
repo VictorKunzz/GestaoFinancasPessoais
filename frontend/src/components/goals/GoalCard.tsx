@@ -1,5 +1,6 @@
 import { Target, Calendar, Pencil, Trash2, Plus } from 'lucide-react';
 import type { Goal } from '../../types';
+import { formatCurrency } from '../../lib/format';
 import Card from '../ui/Card';
 
 interface GoalCardProps {
@@ -7,10 +8,6 @@ interface GoalCardProps {
   onEdit: (goal: Goal) => void;
   onDelete: (goal: Goal) => void;
   onContribute: (goal: Goal) => void;
-}
-
-function formatCurrency(value: number): string {
-  return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
 function formatDate(dateStr: string): string {

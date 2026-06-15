@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Plus } from 'lucide-react';
-import type { Goal, CreateGoalRequest, CreateContributionRequest } from '../types';
+import type { Goal, CreateGoalRequest } from '../types';
 import * as goalService from '../services/goal.service';
+import * as transactionService from '../services/transaction.service';
 import * as badgeService from '../services/badge.service';
 import { useToast } from '../hooks/useToast';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
@@ -9,7 +10,7 @@ import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
 import GoalCard from '../components/goals/GoalCard';
 import GoalModal from '../components/goals/GoalModal';
-import ContributionModal from '../components/goals/ContributionModal';
+import ContributionModal, { type ContributionData } from '../components/goals/ContributionModal';
 
 export default function GoalsPage() {
   const { addToast } = useToast();
@@ -84,13 +85,26 @@ export default function GoalsPage() {
     }
   }
 
-  async function handleAddContribution(data: CreateContributionRequest) {
+  async function handleAddContribution(data: ContributionData) {
     if (!contributeTarget) return;
-    const result = await goalService.addContribution(contributeTarget.id, data);
-    setGoals((prev) => prev.map((g) => (g.id === result.goal.id ? result.goal : g)));
+    // Aporte = despesa vinculada a meta; o backend incrementa savedAmount
+    await transactionService.create({
+      type: 'EXPENSE',
+      description: data.description,
+      amount: data.amount,
+      date: data.date,
+      goalId: contributeTarget.id,
+    });
+    await loadGoals();
     addToast('success', 'Aporte registrado com sucesso!');
-    if (result.badge?.awarded && result.badge.badge) {
-      addToast('badge', `Parabéns! Você conquistou: ${result.badge.badge.name}`);
+
+    try {
+      const first = await badgeService.check('FIRST_TRANSACTION');
+      if (first.awarded) addToast('badge', first.message);
+      const reached = await badgeService.check('GOAL_REACHED');
+      if (reached.awarded) addToast('badge', reached.message);
+    } catch (err) {
+      console.error('Erro ao checar badge', err);
     }
   }
 

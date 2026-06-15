@@ -1,15 +1,12 @@
 import { ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import type { Transaction } from '../../types';
+import { formatCurrency } from '../../lib/format';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 
 interface RecentTransactionsProps {
   transactions: Transaction[];
-}
-
-function formatCurrency(value: number): string {
-  return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
 function formatDate(dateStr: string): string {

@@ -17,18 +17,17 @@ enum Role {
 
 // Tabela de usuários
 model User {
-  id            String             @id @default(uuid())
-  name          String
-  email         String             @unique
-  passwordHash  String
-  role          Role               @default(USER)
-  createdAt     DateTime           @default(now())
-  transactions  Transaction[]
-  goals         Goal[]
-  badges        UserBadge[]
-  categories    Category[]
-  contributions GoalContribution[]
-  budgets       Budget[]
+  id           String        @id @default(uuid())
+  name         String
+  email        String        @unique
+  passwordHash String
+  role         Role          @default(USER)
+  createdAt    DateTime      @default(now())
+  transactions Transaction[]
+  goals        Goal[]
+  badges       UserBadge[]
+  categories   Category[]
+  budgets      Budget[]
 }
 
 // Tabela de categorias (alimentação, transporte, lazer, etc).
@@ -46,10 +45,11 @@ model Category {
   @@unique([userId, name])
 }
 
-// Tipo da transação: receita ou despesa
+// Tipo da transação: receita, despesa ou investimento
 enum TransactionType {
   INCOME
   EXPENSE
+  INVESTMENT
 }
 
 // Tabela de transações financeiras (receitas e despesas)
@@ -57,6 +57,7 @@ model Transaction {
   id          String          @id @default(uuid())
   userId      String
   categoryId  String
+  goalId      String?
   type        TransactionType
   description String
   amount      Decimal
@@ -64,34 +65,23 @@ model Transaction {
   createdAt   DateTime        @default(now())
   user        User            @relation(fields: [userId], references: [id])
   category    Category        @relation(fields: [categoryId], references: [id])
+  goal        Goal?           @relation(fields: [goalId], references: [id], onDelete: SetNull)
 
   @@index([userId, date])
 }
 
-// Tabela de metas financeiras
+// Tabela de metas financeiras.
+// savedAmount e alimentado automaticamente pelas transacoes de despesa vinculadas (aportes).
 model Goal {
-  id            String             @id @default(uuid())
-  userId        String
-  name          String
-  targetAmount  Decimal
-  savedAmount   Decimal            @default(0)
-  deadline      DateTime?
-  createdAt     DateTime           @default(now())
-  user          User               @relation(fields: [userId], references: [id])
-  contributions GoalContribution[]
-}
-
-// Aportes de uma meta. Mantem o historico e alimenta Goal.savedAmount automaticamente.
-model GoalContribution {
-  id        String   @id @default(uuid())
-  goalId    String
-  userId    String
-  amount    Decimal
-  note      String?
-  date      DateTime @default(now())
-  createdAt DateTime @default(now())
-  goal      Goal     @relation(fields: [goalId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id])
+  id           String        @id @default(uuid())
+  userId       String
+  name         String
+  targetAmount Decimal
+  savedAmount  Decimal       @default(0)
+  deadline     DateTime?
+  createdAt    DateTime      @default(now())
+  user         User          @relation(fields: [userId], references: [id])
+  transactions Transaction[]
 }
 
 // Orcamento mensal por categoria (alerta de estouro)

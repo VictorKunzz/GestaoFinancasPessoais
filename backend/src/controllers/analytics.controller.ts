@@ -3,7 +3,7 @@ import analyticsService from "../services/analytics.service";
 
 async function getHealthScore(req: Request, res: Response) {
   try {
-    const userId = (req as any).userId;
+    const userId = req.userId;
     const resultado = await analyticsService.getHealthScore(userId);
     res.json(resultado);
   } catch (error: any) {
@@ -13,7 +13,7 @@ async function getHealthScore(req: Request, res: Response) {
 
 async function getInsights(req: Request, res: Response) {
   try {
-    const userId = (req as any).userId;
+    const userId = req.userId;
     const resultado = await analyticsService.getInsights(userId);
     res.json(resultado);
   } catch (error: any) {
@@ -23,7 +23,7 @@ async function getInsights(req: Request, res: Response) {
 
 async function getBalanceForecast(req: Request, res: Response) {
   try {
-    const userId = (req as any).userId;
+    const userId = req.userId;
     const resultado = await analyticsService.getBalanceForecast(userId);
     res.json(resultado);
   } catch (error: any) {
@@ -33,7 +33,7 @@ async function getBalanceForecast(req: Request, res: Response) {
 
 async function getCashflow(req: Request, res: Response) {
   try {
-    const userId = (req as any).userId;
+    const userId = req.userId;
     const mesesParam = Number(req.query.months);
     const meses = Number.isFinite(mesesParam) && mesesParam >= 1 && mesesParam <= 12 ? mesesParam : 6;
     const resultado = await analyticsService.getCashflow(userId, meses);
@@ -45,7 +45,7 @@ async function getCashflow(req: Request, res: Response) {
 
 async function getMonthlyComparison(req: Request, res: Response) {
   try {
-    const userId = (req as any).userId;
+    const userId = req.userId;
     const resultado = await analyticsService.getMonthlyComparison(userId);
     res.json(resultado);
   } catch (error: any) {

@@ -6,6 +6,7 @@ import { useToast } from '../hooks/useToast';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
+import { badgeIconByCondition } from '../lib/icons';
 import BadgeModal, { CONDITION_OPTIONS } from '../components/admin/BadgeModal';
 
 function conditionLabel(value: string): string {
@@ -112,7 +113,9 @@ export default function AdminBadgesPage() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {badges.map((badge) => (
+        {badges.map((badge) => {
+          const BadgeIcon = badgeIconByCondition[badge.condition] ?? Trophy;
+          return (
           <div
             key={badge.id}
             className="flex flex-col gap-3 p-4 bg-bg-card border border-border-default rounded-xl"
@@ -120,11 +123,7 @@ export default function AdminBadgesPage() {
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-accent-amber/15 text-accent-amber shrink-0">
-                  {badge.icon ? (
-                    <span className="text-lg leading-none">{badge.icon}</span>
-                  ) : (
-                    <Trophy size={18} />
-                  )}
+                  <BadgeIcon size={18} />
                 </div>
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-text-primary truncate">{badge.name}</p>
@@ -159,7 +158,8 @@ export default function AdminBadgesPage() {
               )}
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
 
       <BadgeModal

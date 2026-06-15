@@ -1,17 +1,10 @@
-import { Lock, Zap, Target, Trophy, TrendingUp, PiggyBank } from 'lucide-react';
+import { Lock, Trophy } from 'lucide-react';
 import type { Badge } from '../../types';
+import { badgeIconByCondition } from '../../lib/icons';
 
 interface BadgeCardProps {
   badge: Badge;
 }
-
-const conditionIcons: Record<string, typeof Zap> = {
-  FIRST_TRANSACTION: Zap,
-  FIRST_GOAL: Target,
-  GOAL_REACHED: Trophy,
-  POSITIVE_MONTH: TrendingUp,
-  SPENT_LESS: PiggyBank,
-};
 
 const conditionGradients: Record<string, string> = {
   FIRST_TRANSACTION: 'from-accent-violet to-accent-blue',
@@ -38,7 +31,7 @@ function formatDate(dateStr: string): string {
 }
 
 export default function BadgeCard({ badge }: BadgeCardProps) {
-  const Icon = conditionIcons[badge.condition] || Trophy;
+  const Icon = badgeIconByCondition[badge.condition] || Trophy;
   const gradient = conditionGradients[badge.condition] || 'from-accent-violet to-accent-blue';
   const glow = conditionGlow[badge.condition] || 'shadow-accent-violet/30';
 

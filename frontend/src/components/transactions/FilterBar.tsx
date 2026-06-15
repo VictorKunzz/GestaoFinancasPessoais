@@ -44,6 +44,7 @@ export default function FilterBar({
             <option value="">Todos os tipos</option>
             <option value="INCOME">Receitas</option>
             <option value="EXPENSE">Despesas</option>
+            <option value="INVESTMENT">Investimentos</option>
           </select>
         </div>
 

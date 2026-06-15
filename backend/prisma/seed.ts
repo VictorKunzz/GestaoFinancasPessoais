@@ -12,7 +12,8 @@ const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
-// Categorias padrao que vem com o sistema (userId null = globais)
+// Categorias padrao que vem com o sistema (userId null = globais).
+// icon = slug de um icone lucide (renderizado via lib/icons no frontend).
 const categoriasPadrao = [
   { name: "Alimentacao", icon: "utensils" },
   { name: "Transporte", icon: "car" },
@@ -23,21 +24,23 @@ const categoriasPadrao = [
   { name: "Vestuario", icon: "shirt" },
   { name: "Salario", icon: "banknote" },
   { name: "Freelance", icon: "briefcase" },
+  { name: "Investimentos", icon: "line-chart" },
   { name: "Outros", icon: "ellipsis" },
 ];
 
-// Medalhas disponiveis no sistema (condition usa o enum BadgeCondition)
+// Medalhas disponiveis no sistema (condition usa o enum BadgeCondition).
+// O icone exibido e derivado da condition no frontend; o slug aqui serve de fallback.
 const medalhas = [
   {
     name: "Primeira Transacao",
     description: "Registrou sua primeira transacao",
-    icon: "sparkles",
+    icon: "zap",
     condition: BadgeCondition.FIRST_TRANSACTION,
   },
   {
     name: "Meta Criada",
     description: "Criou sua primeira meta financeira",
-    icon: "flag",
+    icon: "target",
     condition: BadgeCondition.FIRST_GOAL,
   },
   {
@@ -72,6 +75,12 @@ async function main() {
       await prisma.category.create({
         data: { name: categoria.name, icon: categoria.icon, isDefault: true },
       });
+    } else if (existe.icon !== categoria.icon) {
+      // Atualiza icones legados (emojis) para slugs lucide
+      await prisma.category.update({
+        where: { id: existe.id },
+        data: { icon: categoria.icon },
+      });
     }
   }
 
@@ -86,6 +95,12 @@ async function main() {
 
     if (!existe) {
       await prisma.badge.create({ data: medalha });
+    } else if (existe.icon !== medalha.icon) {
+      // Atualiza icones legados (emojis) para slugs lucide
+      await prisma.badge.update({
+        where: { id: existe.id },
+        data: { icon: medalha.icon },
+      });
     }
   }
 

@@ -47,22 +47,25 @@ export interface UpdateCategoryRequest {
 }
 
 // --- Transações ---
-export type TransactionType = 'INCOME' | 'EXPENSE';
+export type TransactionType = 'INCOME' | 'EXPENSE' | 'INVESTMENT';
 
 export interface Transaction {
   id: string;
   userId: string;
   categoryId: string;
+  goalId?: string | null;
   type: TransactionType;
   description: string;
   amount: number | string; // Decimal vem como string do Prisma
   date: string;
   createdAt: string;
   category?: Category;
+  goal?: { id: string; name: string } | null;
 }
 
 export interface CreateTransactionRequest {
   categoryId?: string;
+  goalId?: string | null;
   type: TransactionType;
   description: string;
   amount: number;
@@ -71,6 +74,7 @@ export interface CreateTransactionRequest {
 
 export interface UpdateTransactionRequest {
   categoryId?: string;
+  goalId?: string | null;
   type?: TransactionType;
   description?: string;
   amount?: number;
@@ -120,35 +124,13 @@ export interface UpdateGoalRequest {
   deadline?: string;
 }
 
-// --- Aportes (vínculo de metas) ---
-export interface GoalContribution {
-  id: string;
-  goalId: string;
-  userId: string;
-  amount: number | string;
-  note: string | null;
-  date: string;
-  createdAt: string;
-}
-
-export interface CreateContributionRequest {
-  amount: number;
-  note?: string;
-  date?: string;
-}
-
-export interface AddContributionResponse {
-  contribution: GoalContribution;
-  goal: Goal;
-  badge: { awarded: boolean; badge?: Badge } | null;
-}
-
 // --- Analytics ---
 export interface HealthScore {
   score: number;
   nivel: string;
   totalReceitas: number;
   totalDespesas: number;
+  totalInvestimentos: number;
   saldo: number;
   percentualGasto: number;
   mensagem: string;
@@ -171,6 +153,7 @@ export interface Insights {
 export interface BalanceForecast {
   previsaoReceita: number;
   previsaoDespesa: number;
+  previsaoInvestimento: number;
   previsaoSaldo: number;
   mensagem: string;
 }
@@ -180,6 +163,7 @@ export interface CashflowPoint {
   label: string;
   receitas: number;
   despesas: number;
+  investimentos: number;
   saldo: number;
 }
 

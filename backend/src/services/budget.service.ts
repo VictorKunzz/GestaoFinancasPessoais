@@ -15,9 +15,10 @@ async function gastosDoMesPorCategoria(userId: string): Promise<Record<string, n
   const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
   const fimMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0, 23, 59, 59);
 
+  // goalId: null exclui aportes de meta — nao contam contra o orcamento da categoria
   const agrupado = await prisma.transaction.groupBy({
     by: ["categoryId"],
-    where: { userId, type: "EXPENSE", date: { gte: inicioMes, lte: fimMes } },
+    where: { userId, type: "EXPENSE", goalId: null, date: { gte: inicioMes, lte: fimMes } },
     _sum: { amount: true },
   });
 

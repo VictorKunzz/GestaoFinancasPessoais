@@ -60,9 +60,9 @@ async function removeUser(adminId: string, userId: string) {
   }
 
   // Ordem explicita por causa das FKs restritivas (Transaction/Goal/Budget/UserBadge -> User).
+  // Transacoes antes das metas: Transaction.goalId aponta para Goal (onDelete SetNull).
   await prisma.$transaction([
     prisma.userBadge.deleteMany({ where: { userId } }),
-    prisma.goalContribution.deleteMany({ where: { userId } }),
     prisma.transaction.deleteMany({ where: { userId } }),
     prisma.budget.deleteMany({ where: { userId } }),
     prisma.goal.deleteMany({ where: { userId } }),

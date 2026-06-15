@@ -1,32 +1,35 @@
 import { useState, useEffect } from 'react';
-import type { Goal, CreateContributionRequest } from '../../types';
+import type { Goal } from '../../types';
 import { useToast } from '../../hooks/useToast';
+import { formatCurrency } from '../../lib/format';
 import Modal from '../ui/Modal';
 import Input from '../ui/Input';
 import Button from '../ui/Button';
 
+export interface ContributionData {
+  amount: number;
+  description: string;
+  date: string;
+}
+
 interface ContributionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: CreateContributionRequest) => Promise<void>;
+  onSubmit: (data: ContributionData) => Promise<void>;
   goal: Goal | null;
-}
-
-function formatCurrency(value: number): string {
-  return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
 export default function ContributionModal({ isOpen, onClose, onSubmit, goal }: ContributionModalProps) {
   const { addToast } = useToast();
   const [amount, setAmount] = useState('');
-  const [note, setNote] = useState('');
+  const [description, setDescription] = useState('');
   const [date, setDate] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
     setAmount('');
-    setNote('');
+    setDescription('');
     setDate(new Date().toISOString().split('T')[0]);
     setError('');
   }, [goal, isOpen]);
@@ -51,8 +54,8 @@ export default function ContributionModal({ isOpen, onClose, onSubmit, goal }: C
     try {
       await onSubmit({
         amount: numAmount,
-        note: note.trim() || undefined,
-        date: date || undefined,
+        description: description.trim() || `Aporte: ${goal!.name}`,
+        date,
       });
       onClose();
     } catch (err: any) {
@@ -75,6 +78,10 @@ export default function ContributionModal({ isOpen, onClose, onSubmit, goal }: C
           <span>Falta: {formatCurrency(restante)}</span>
         </div>
 
+        <p className="text-xs text-text-muted bg-bg-input border border-border-default rounded-lg px-3 py-2">
+          O aporte e registrado como uma despesa vinculada a esta meta e nao entra na contagem de gastos.
+        </p>
+
         <Input
           label="Valor do aporte (R$)"
           type="number"
@@ -87,10 +94,10 @@ export default function ContributionModal({ isOpen, onClose, onSubmit, goal }: C
         />
 
         <Input
-          label="Observação (opcional)"
-          placeholder="Ex: 13º salário"
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
+          label="Descrição (opcional)"
+          placeholder={`Aporte: ${goal.name}`}
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
           maxLength={200}
         />
 
