@@ -1,17 +1,20 @@
-import { TrendingUp, TrendingDown, Wallet } from 'lucide-react';
+import { TrendingUp, TrendingDown, Wallet, LineChart } from 'lucide-react';
+import { formatCurrency } from '../../lib/format';
 import Card from '../ui/Card';
 
 interface BalanceSummaryProps {
   totalReceitas: number;
   totalDespesas: number;
+  totalInvestimentos: number;
   saldo: number;
 }
 
-function formatCurrency(value: number): string {
-  return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-}
-
-export default function BalanceSummary({ totalReceitas, totalDespesas, saldo }: BalanceSummaryProps) {
+export default function BalanceSummary({
+  totalReceitas,
+  totalDespesas,
+  totalInvestimentos,
+  saldo,
+}: BalanceSummaryProps) {
   const items = [
     {
       label: 'Receitas',
@@ -28,6 +31,13 @@ export default function BalanceSummary({ totalReceitas, totalDespesas, saldo }: 
       bg: 'bg-accent-rose/15',
     },
     {
+      label: 'Investido',
+      value: totalInvestimentos,
+      icon: LineChart,
+      color: 'text-accent-blue',
+      bg: 'bg-accent-blue/15',
+    },
+    {
       label: 'Saldo',
       value: saldo,
       icon: Wallet,
@@ -37,7 +47,7 @@ export default function BalanceSummary({ totalReceitas, totalDespesas, saldo }: 
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       {items.map((item) => (
         <Card key={item.label} hover padding="sm">
           <div className="flex items-center gap-3">

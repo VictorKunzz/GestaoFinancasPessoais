@@ -1,5 +1,7 @@
-import { ArrowUpRight, ArrowDownRight, Pencil, Trash2 } from 'lucide-react';
-import type { Transaction } from '../../types';
+import { ArrowUpRight, ArrowDownRight, LineChart, Target, Pencil, Trash2 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+import type { Transaction, TransactionType } from '../../types';
+import { formatCurrency } from '../../lib/format';
 import Card from '../ui/Card';
 
 interface TransactionTableProps {
@@ -8,9 +10,12 @@ interface TransactionTableProps {
   onDelete: (transaction: Transaction) => void;
 }
 
-function formatCurrency(value: number): string {
-  return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-}
+// Visual por tipo de transacao: receita (entra), despesa (sai), investimento (sai do disponivel)
+const TYPE_VISUAL: Record<TransactionType, { Icon: LucideIcon; color: string; bg: string; sign: string }> = {
+  INCOME: { Icon: ArrowUpRight, color: 'text-accent-emerald', bg: 'bg-accent-emerald/15', sign: '+' },
+  EXPENSE: { Icon: ArrowDownRight, color: 'text-accent-rose', bg: 'bg-accent-rose/15', sign: '-' },
+  INVESTMENT: { Icon: LineChart, color: 'text-accent-blue', bg: 'bg-accent-blue/15', sign: '-' },
+};
 
 function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('pt-BR');
@@ -56,27 +61,33 @@ export default function TransactionTable({ transactions, onEdit, onDelete }: Tra
           </thead>
           <tbody className="divide-y divide-border-default">
             {transactions.map((t) => {
-              const isIncome = t.type === 'INCOME';
+              const v = TYPE_VISUAL[t.type] ?? TYPE_VISUAL.EXPENSE;
               const amount = Number(t.amount);
 
               return (
                 <tr key={t.id} className="hover:bg-bg-card-hover/50 transition-colors">
                   <td className="px-4 py-3">
-                    <div className={`inline-flex p-1.5 rounded-lg ${isIncome ? 'bg-accent-emerald/15' : 'bg-accent-rose/15'}`}>
-                      {isIncome ? (
-                        <ArrowUpRight className="text-accent-emerald" size={14} />
-                      ) : (
-                        <ArrowDownRight className="text-accent-rose" size={14} />
+                    <div className={`inline-flex p-1.5 rounded-lg ${v.bg}`}>
+                      <v.Icon className={v.color} size={14} />
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-sm text-text-primary">
+                    <div className="flex items-center gap-2">
+                      <span>{t.description}</span>
+                      {t.goal && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-accent-violet/15 text-accent-violet">
+                          <Target size={11} />
+                          {t.goal.name}
+                        </span>
                       )}
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-sm text-text-primary">{t.description}</td>
                   <td className="px-4 py-3 text-sm text-text-secondary">
                     {t.category?.name || 'Sem categoria'}
                   </td>
                   <td className="px-4 py-3 text-sm text-text-secondary">{formatDate(t.date)}</td>
-                  <td className={`px-4 py-3 text-sm font-medium text-right ${isIncome ? 'text-accent-emerald' : 'text-accent-rose'}`}>
-                    {isIncome ? '+' : '-'} {formatCurrency(amount)}
+                  <td className={`px-4 py-3 text-sm font-medium text-right ${v.color}`}>
+                    {v.sign} {formatCurrency(amount)}
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex items-center justify-end gap-1">
@@ -104,30 +115,32 @@ export default function TransactionTable({ transactions, onEdit, onDelete }: Tra
       {/* Mobile cards */}
       <div className="md:hidden space-y-3">
         {transactions.map((t) => {
-          const isIncome = t.type === 'INCOME';
+          const v = TYPE_VISUAL[t.type] ?? TYPE_VISUAL.EXPENSE;
           const amount = Number(t.amount);
 
           return (
             <Card key={t.id} padding="sm" hover>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className={`p-2 rounded-lg ${isIncome ? 'bg-accent-emerald/15' : 'bg-accent-rose/15'}`}>
-                    {isIncome ? (
-                      <ArrowUpRight className="text-accent-emerald" size={16} />
-                    ) : (
-                      <ArrowDownRight className="text-accent-rose" size={16} />
-                    )}
+                  <div className={`p-2 rounded-lg ${v.bg}`}>
+                    <v.Icon className={v.color} size={16} />
                   </div>
                   <div className="min-w-0">
                     <p className="text-sm text-text-primary truncate">{t.description}</p>
                     <p className="text-xs text-text-muted">
                       {t.category?.name || 'Sem categoria'} · {formatDate(t.date)}
                     </p>
+                    {t.goal && (
+                      <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-accent-violet/15 text-accent-violet">
+                        <Target size={11} />
+                        {t.goal.name}
+                      </span>
+                    )}
                   </div>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0 ml-3">
-                  <span className={`text-sm font-medium ${isIncome ? 'text-accent-emerald' : 'text-accent-rose'}`}>
-                    {isIncome ? '+' : '-'} {formatCurrency(amount)}
+                  <span className={`text-sm font-medium ${v.color}`}>
+                    {v.sign} {formatCurrency(amount)}
                   </span>
                   <button
                     onClick={() => onEdit(t)}

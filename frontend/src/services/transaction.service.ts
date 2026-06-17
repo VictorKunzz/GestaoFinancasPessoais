@@ -2,12 +2,13 @@ import api from './api';
 import type {
   Transaction,
   TransactionFilters,
+  PaginatedTransactions,
   CreateTransactionRequest,
   UpdateTransactionRequest,
 } from '../types';
 
-export async function getAll(filters?: TransactionFilters): Promise<Transaction[]> {
-  const response = await api.get<Transaction[]>('/transactions', { params: filters });
+export async function getAll(filters?: TransactionFilters): Promise<PaginatedTransactions> {
+  const response = await api.get<PaginatedTransactions>('/transactions', { params: filters });
   return response.data;
 }
 

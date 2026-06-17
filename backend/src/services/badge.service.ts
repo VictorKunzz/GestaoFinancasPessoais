@@ -1,8 +1,9 @@
 import prisma from "../utils/prisma";
+import { BadgeCondition } from "../generated/prisma/enums";
 
 async function getAllBadges(userId: string) {
   const todasMedalhas = await prisma.badge.findMany();
-  
+
   const usuarioMedalhas = await prisma.userBadge.findMany({
     where: { userId },
     include: { badge: true },
@@ -17,8 +18,8 @@ async function getAllBadges(userId: string) {
     icon: m.icon,
     condition: m.condition,
     earned: idsConquistadas.has(m.id),
-    earnedAt: idsConquistadas.has(m.id) 
-      ? usuarioMedalhas.find((um) => um.badgeId === m.id)?.earnedAt 
+    earnedAt: idsConquistadas.has(m.id)
+      ? usuarioMedalhas.find((um) => um.badgeId === m.id)?.earnedAt
       : null,
   }));
 
@@ -41,8 +42,58 @@ async function getUserBadges(userId: string) {
   }));
 }
 
-async function checkAndAwardBadge(userId: string, condition: string) {
+async function somaPorTipo(userId: string, tipo: "INCOME" | "EXPENSE", inicio: Date, fim: Date) {
+  const resultado = await prisma.transaction.aggregate({
+    _sum: { amount: true },
+    where: {
+      userId,
+      type: tipo as any,
+      goalId: null,
+      date: { gte: inicio, lt: fim },
+    },
+  });
 
+  return Number(resultado._sum.amount ?? 0);
+}
+
+async function avaliaCondicao(userId: string, condition: BadgeCondition): Promise<boolean> {
+  switch (condition) {
+    case BadgeCondition.FIRST_TRANSACTION: {
+      const total = await prisma.transaction.count({ where: { userId } });
+      return total >= 1;
+    }
+    case BadgeCondition.FIRST_GOAL: {
+      const total = await prisma.goal.count({ where: { userId } });
+      return total >= 1;
+    }
+    case BadgeCondition.GOAL_REACHED: {
+      const metas = await prisma.goal.findMany({ where: { userId } });
+      return metas.some((m) => Number(m.savedAmount) >= Number(m.targetAmount));
+    }
+    case BadgeCondition.POSITIVE_MONTH: {
+      const agora = new Date();
+      const inicioMes = new Date(agora.getFullYear(), agora.getMonth(), 1);
+      const inicioProxMes = new Date(agora.getFullYear(), agora.getMonth() + 1, 1);
+      const receitas = await somaPorTipo(userId, "INCOME", inicioMes, inicioProxMes);
+      const despesas = await somaPorTipo(userId, "EXPENSE", inicioMes, inicioProxMes);
+      return receitas > 0 && receitas > despesas;
+    }
+    case BadgeCondition.SPENT_LESS: {
+      const agora = new Date();
+      const inicioMes = new Date(agora.getFullYear(), agora.getMonth(), 1);
+      const inicioProxMes = new Date(agora.getFullYear(), agora.getMonth() + 1, 1);
+      const inicioMesAnterior = new Date(agora.getFullYear(), agora.getMonth() - 1, 1);
+      const despesasMes = await somaPorTipo(userId, "EXPENSE", inicioMes, inicioProxMes);
+      const despesasAnterior = await somaPorTipo(userId, "EXPENSE", inicioMesAnterior, inicioMes);
+      // So premia quando houve gasto no mes anterior e o mes atual foi menor.
+      return despesasAnterior > 0 && despesasMes < despesasAnterior;
+    }
+    default:
+      return false;
+  }
+}
+
+async function checkAndAwardBadge(userId: string, condition: BadgeCondition) {
   const medalha = await prisma.badge.findFirst({
     where: { condition },
   });
@@ -50,55 +101,20 @@ async function checkAndAwardBadge(userId: string, condition: string) {
   if (!medalha) return null;
 
   const jaPossui = await prisma.userBadge.findFirst({
-    where: {
-      userId,
-      badgeId: medalha.id,
-    },
+    where: { userId, badgeId: medalha.id },
   });
 
   if (jaPossui) return null;
 
-  let mereceMedalha = false;
-
-  if (condition === "first_transaction") {
-    const transacoes = await prisma.transaction.count({ where: { userId } });
-    if (transacoes >= 1) mereceMedalha = true;
-  } 
-  else if (condition === "first_goal") {
-    const metas = await prisma.goal.count({ where: { userId } });
-    if (metas >= 1) mereceMedalha = true;
-  }
-  else if (condition === "goal_reached") {
-
-    const metasAtingidas = await prisma.goal.findFirst({
-      where: {
-        userId,
-        savedAmount: { gte: prisma.goal.fields.targetAmount }
-      } as any
-    });
-    
-    const todasMetas = await prisma.goal.findMany({ where: { userId } });
-    const atingiuAlguma = todasMetas.some(m => Number(m.savedAmount) >= Number(m.targetAmount));
-    
-    if (atingiuAlguma) mereceMedalha = true;
-  }
-  else if (condition === "positive_month" || condition === "spent_less") {
-    mereceMedalha = true;
-  }
+  const mereceMedalha = await avaliaCondicao(userId, condition);
 
   if (mereceMedalha) {
     const conquista = await prisma.userBadge.create({
-      data: {
-        userId,
-        badgeId: medalha.id,
-      },
+      data: { userId, badgeId: medalha.id },
       include: { badge: true },
     });
-    
-    return {
-      awarded: true,
-      badge: conquista.badge,
-    };
+
+    return { awarded: true, badge: conquista.badge };
   }
 
   return { awarded: false };

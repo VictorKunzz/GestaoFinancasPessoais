@@ -4,17 +4,20 @@ import { createTransactionSchema, updateTransactionSchema } from "../validators/
 
 async function getAll(req: Request, res: Response) {
   try {
-    const userId = (req as any).userId;
+    const userId = req.userId;
 
     const filtros = {
       type: req.query.type as string | undefined,
       categoryId: req.query.categoryId as string | undefined,
       startDate: req.query.startDate as string | undefined,
       endDate: req.query.endDate as string | undefined,
+      search: req.query.search as string | undefined,
+      page: req.query.page ? Number(req.query.page) : undefined,
+      limit: req.query.limit ? Number(req.query.limit) : undefined,
     };
 
-    const transacoes = await transactionService.getAll(userId, filtros);
-    res.json(transacoes);
+    const resultado = await transactionService.getAll(userId, filtros);
+    res.json(resultado);
   } catch (error: any) {
     res.status(500).json({ error: "Erro interno do servidor" });
   }
@@ -22,8 +25,8 @@ async function getAll(req: Request, res: Response) {
 
 async function getById(req: Request, res: Response) {
   try {
-    const userId = (req as any).userId;
-    const transacao = await transactionService.getById(userId, req.params.id);
+    const userId = req.userId;
+    const transacao = await transactionService.getById(userId, req.params.id as string);
     res.json(transacao);
   } catch (error: any) {
     if (error.message === "Transacao nao encontrada") {
@@ -36,7 +39,7 @@ async function getById(req: Request, res: Response) {
 
 async function create(req: Request, res: Response) {
   try {
-    const userId = (req as any).userId;
+    const userId = req.userId;
     const dados = createTransactionSchema.parse(req.body);
     const transacao = await transactionService.create(userId, dados);
     res.status(201).json(transacao);
@@ -45,7 +48,7 @@ async function create(req: Request, res: Response) {
       res.status(400).json({ error: error.errors });
       return;
     }
-    if (error.message === "Categoria nao encontrada") {
+    if (error.message === "Categoria nao encontrada" || error.message === "Meta nao encontrada") {
       res.status(400).json({ error: error.message });
       return;
     }
@@ -55,9 +58,9 @@ async function create(req: Request, res: Response) {
 
 async function update(req: Request, res: Response) {
   try {
-    const userId = (req as any).userId;
+    const userId = req.userId;
     const dados = updateTransactionSchema.parse(req.body);
-    const transacao = await transactionService.update(userId, req.params.id, dados);
+    const transacao = await transactionService.update(userId, req.params.id as string, dados);
     res.json(transacao);
   } catch (error: any) {
     if (error.name === "ZodError") {
@@ -68,14 +71,18 @@ async function update(req: Request, res: Response) {
       res.status(404).json({ error: error.message });
       return;
     }
+    if (error.message === "Meta nao encontrada") {
+      res.status(400).json({ error: error.message });
+      return;
+    }
     res.status(500).json({ error: "Erro interno do servidor" });
   }
 }
 
 async function remove(req: Request, res: Response) {
   try {
-    const userId = (req as any).userId;
-    await transactionService.remove(userId, req.params.id);
+    const userId = req.userId;
+    await transactionService.remove(userId, req.params.id as string);
     res.json({ message: "Transacao removida com sucesso" });
   } catch (error: any) {
     if (error.message === "Transacao nao encontrada") {

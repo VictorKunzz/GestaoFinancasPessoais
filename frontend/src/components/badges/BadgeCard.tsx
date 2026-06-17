@@ -1,32 +1,25 @@
-import { Lock, Zap, Target, Trophy, TrendingUp, PiggyBank } from 'lucide-react';
+import { Lock, Trophy } from 'lucide-react';
 import type { Badge } from '../../types';
+import { badgeIconByCondition } from '../../lib/icons';
 
 interface BadgeCardProps {
   badge: Badge;
 }
 
-const conditionIcons: Record<string, typeof Zap> = {
-  first_transaction: Zap,
-  first_goal: Target,
-  goal_reached: Trophy,
-  positive_month: TrendingUp,
-  spent_less: PiggyBank,
-};
-
 const conditionGradients: Record<string, string> = {
-  first_transaction: 'from-accent-violet to-accent-blue',
-  first_goal: 'from-accent-amber to-accent-rose',
-  goal_reached: 'from-accent-emerald to-accent-blue',
-  positive_month: 'from-accent-blue to-accent-violet',
-  spent_less: 'from-accent-emerald to-accent-amber',
+  FIRST_TRANSACTION: 'from-accent-violet to-accent-blue',
+  FIRST_GOAL: 'from-accent-amber to-accent-rose',
+  GOAL_REACHED: 'from-accent-emerald to-accent-blue',
+  POSITIVE_MONTH: 'from-accent-blue to-accent-violet',
+  SPENT_LESS: 'from-accent-emerald to-accent-amber',
 };
 
 const conditionGlow: Record<string, string> = {
-  first_transaction: 'shadow-accent-violet/30',
-  first_goal: 'shadow-accent-amber/30',
-  goal_reached: 'shadow-accent-emerald/30',
-  positive_month: 'shadow-accent-blue/30',
-  spent_less: 'shadow-accent-emerald/30',
+  FIRST_TRANSACTION: 'shadow-accent-violet/30',
+  FIRST_GOAL: 'shadow-accent-amber/30',
+  GOAL_REACHED: 'shadow-accent-emerald/30',
+  POSITIVE_MONTH: 'shadow-accent-blue/30',
+  SPENT_LESS: 'shadow-accent-emerald/30',
 };
 
 function formatDate(dateStr: string): string {
@@ -38,7 +31,7 @@ function formatDate(dateStr: string): string {
 }
 
 export default function BadgeCard({ badge }: BadgeCardProps) {
-  const Icon = conditionIcons[badge.condition] || Trophy;
+  const Icon = badgeIconByCondition[badge.condition] || Trophy;
   const gradient = conditionGradients[badge.condition] || 'from-accent-violet to-accent-blue';
   const glow = conditionGlow[badge.condition] || 'shadow-accent-violet/30';
 

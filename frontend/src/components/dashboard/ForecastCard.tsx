@@ -1,13 +1,10 @@
-import { TrendingUp, TrendingDown, PiggyBank } from 'lucide-react';
+import { TrendingUp, TrendingDown, PiggyBank, LineChart } from 'lucide-react';
 import type { BalanceForecast } from '../../types';
+import { formatCurrency } from '../../lib/format';
 import Card from '../ui/Card';
 
 interface ForecastCardProps {
   data: BalanceForecast;
-}
-
-function formatCurrency(value: number): string {
-  return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
 export default function ForecastCard({ data }: ForecastCardProps) {
@@ -38,6 +35,16 @@ export default function ForecastCard({ data }: ForecastCardProps) {
           </div>
           <span className="text-sm font-medium text-accent-rose">
             {formatCurrency(data.previsaoDespesa)}
+          </span>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-sm text-text-secondary">
+            <LineChart size={16} className="text-accent-blue" />
+            Investimento previsto
+          </div>
+          <span className="text-sm font-medium text-accent-blue">
+            {formatCurrency(data.previsaoInvestimento)}
           </span>
         </div>
 

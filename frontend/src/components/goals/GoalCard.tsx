@@ -1,22 +1,20 @@
-import { Target, Calendar, Pencil, Trash2 } from 'lucide-react';
+import { Target, Calendar, Pencil, Trash2, Plus } from 'lucide-react';
 import type { Goal } from '../../types';
+import { formatCurrency } from '../../lib/format';
 import Card from '../ui/Card';
 
 interface GoalCardProps {
   goal: Goal;
   onEdit: (goal: Goal) => void;
   onDelete: (goal: Goal) => void;
-}
-
-function formatCurrency(value: number): string {
-  return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  onContribute: (goal: Goal) => void;
 }
 
 function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('pt-BR');
 }
 
-export default function GoalCard({ goal, onEdit, onDelete }: GoalCardProps) {
+export default function GoalCard({ goal, onEdit, onDelete, onContribute }: GoalCardProps) {
   const saved = Number(goal.savedAmount);
   const target = Number(goal.targetAmount);
   const percentage = target > 0 ? Math.min((saved / target) * 100, 100) : 0;
@@ -105,6 +103,15 @@ export default function GoalCard({ goal, onEdit, onDelete }: GoalCardProps) {
           <p className="text-sm font-semibold text-text-primary">{formatCurrency(target)}</p>
         </div>
       </div>
+
+      {/* Aporte */}
+      <button
+        onClick={() => onContribute(goal)}
+        className="mt-5 flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-sm font-medium text-accent-violet bg-accent-violet/10 hover:bg-accent-violet/20 transition-colors cursor-pointer"
+      >
+        <Plus size={16} />
+        Adicionar aporte
+      </button>
     </Card>
   );
 }

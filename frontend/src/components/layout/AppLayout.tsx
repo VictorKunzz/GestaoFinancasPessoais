@@ -17,7 +17,7 @@ export default function AppLayout() {
   const title = pageTitles[location.pathname] || '';
 
   return (
-    <div className="flex min-h-screen bg-bg-primary bg-gradient-radial">
+    <div className="flex h-screen overflow-hidden bg-bg-primary bg-gradient-radial">
       <Sidebar
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}

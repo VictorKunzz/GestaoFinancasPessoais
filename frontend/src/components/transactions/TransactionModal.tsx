@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import type { Transaction, TransactionType, Category, CreateTransactionRequest } from '../../types';
+import type { Transaction, TransactionType, Category, Goal, CreateTransactionRequest } from '../../types';
 import { useToast } from '../../hooks/useToast';
 import Modal from '../ui/Modal';
 import Input from '../ui/Input';
@@ -10,6 +10,7 @@ interface TransactionModalProps {
   onClose: () => void;
   onSubmit: (data: CreateTransactionRequest) => Promise<void>;
   categories: Category[];
+  goals?: Goal[];
   transaction?: Transaction | null;
 }
 
@@ -18,6 +19,7 @@ export default function TransactionModal({
   onClose,
   onSubmit,
   categories,
+  goals = [],
   transaction,
 }: TransactionModalProps) {
   const { addToast } = useToast();
@@ -26,6 +28,7 @@ export default function TransactionModal({
   const [amount, setAmount] = useState('');
   const [date, setDate] = useState('');
   const [categoryId, setCategoryId] = useState('');
+  const [goalId, setGoalId] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -38,12 +41,14 @@ export default function TransactionModal({
       setAmount(String(Number(transaction.amount)));
       setDate(transaction.date.split('T')[0]);
       setCategoryId(transaction.categoryId);
+      setGoalId(transaction.goalId ?? '');
     } else {
       setType('EXPENSE');
       setDescription('');
       setAmount('');
       setDate(new Date().toISOString().split('T')[0]);
       setCategoryId('');
+      setGoalId('');
     }
     setError('');
   }, [transaction, isOpen]);
@@ -76,6 +81,7 @@ export default function TransactionModal({
         amount: numAmount,
         date,
         categoryId: categoryId || undefined,
+        goalId: type === 'EXPENSE' ? goalId || null : null,
       });
       onClose();
     } catch {
@@ -115,6 +121,17 @@ export default function TransactionModal({
             }`}
           >
             Receita
+          </button>
+          <button
+            type="button"
+            onClick={() => setType('INVESTMENT')}
+            className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 cursor-pointer ${
+              type === 'INVESTMENT'
+                ? 'bg-accent-blue/20 text-accent-blue border border-accent-blue/30'
+                : 'bg-bg-input text-text-secondary border border-border-default hover:border-border-hover'
+            }`}
+          >
+            Investimento
           </button>
         </div>
 
@@ -160,6 +177,30 @@ export default function TransactionModal({
             ))}
           </select>
         </div>
+
+        {/* Meta (apenas para despesas — vincula a despesa como aporte) */}
+        {type === 'EXPENSE' && goals.length > 0 && (
+          <div className="w-full">
+            <label className="block text-sm font-medium text-text-secondary mb-1.5">
+              Meta (opcional)
+            </label>
+            <select
+              value={goalId}
+              onChange={(e) => setGoalId(e.target.value)}
+              className="w-full bg-bg-input border border-border-default rounded-xl px-4 py-2.5 text-sm text-text-primary focus:outline-none focus:border-accent-violet focus:ring-1 focus:ring-accent-violet/30 transition-all duration-200 cursor-pointer"
+            >
+              <option value="">Nenhuma (despesa comum)</option>
+              {goals.map((goal) => (
+                <option key={goal.id} value={goal.id}>
+                  {goal.name}
+                </option>
+              ))}
+            </select>
+            <p className="text-[11px] text-text-muted mt-1">
+              Vincular a uma meta registra esta despesa como aporte (conta como economia).
+            </p>
+          </div>
+        )}
 
         {error && (
           <p className="text-sm text-accent-rose">{error}</p>

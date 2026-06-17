@@ -26,7 +26,24 @@ function classificarCategoria(descricao: string): string | null {
   return null;
 }
 
-async function getAll(userId: string, filtros?: { type?: string; categoryId?: string; startDate?: string; endDate?: string }) {
+// Confirma que a meta existe e pertence ao usuario. Vinculo so e permitido em despesas (aportes).
+async function garanteMetaDoUsuario(userId: string, goalId: string) {
+  const meta = await prisma.goal.findUnique({ where: { id: goalId } });
+  if (!meta || meta.userId !== userId) {
+    throw new Error("Meta nao encontrada");
+  }
+  return meta;
+}
+
+async function getAll(userId: string, filtros?: {
+  type?: string;
+  categoryId?: string;
+  startDate?: string;
+  endDate?: string;
+  search?: string;
+  page?: number;
+  limit?: number;
+}) {
   const where: any = { userId };
 
   if (filtros?.type) {
@@ -37,25 +54,44 @@ async function getAll(userId: string, filtros?: { type?: string; categoryId?: st
     where.categoryId = filtros.categoryId;
   }
 
+  if (filtros?.search) {
+    where.description = { contains: filtros.search, mode: "insensitive" };
+  }
+
   if (filtros?.startDate || filtros?.endDate) {
     where.date = {};
     if (filtros.startDate) where.date.gte = new Date(filtros.startDate);
     if (filtros?.endDate) where.date.lte = new Date(filtros.endDate);
   }
 
-  const transacoes = await prisma.transaction.findMany({
-    where,
-    include: { category: true },
-    orderBy: { date: "desc" },
-  });
+  const page = Math.max(1, filtros?.page ?? 1);
+  const limit = Math.min(100, Math.max(1, filtros?.limit ?? 20));
+  const skip = (page - 1) * limit;
 
-  return transacoes;
+  const [data, total] = await Promise.all([
+    prisma.transaction.findMany({
+      where,
+      include: { category: true, goal: { select: { id: true, name: true } } },
+      orderBy: { date: "desc" },
+      skip,
+      take: limit,
+    }),
+    prisma.transaction.count({ where }),
+  ]);
+
+  return {
+    data,
+    total,
+    page,
+    limit,
+    totalPages: Math.ceil(total / limit) || 1,
+  };
 }
 
 async function getById(userId: string, id: string) {
   const transacao = await prisma.transaction.findUnique({
     where: { id },
-    include: { category: true },
+    include: { category: true, goal: { select: { id: true, name: true } } },
   });
 
   if (!transacao || transacao.userId !== userId) {
@@ -67,19 +103,28 @@ async function getById(userId: string, id: string) {
 
 async function create(userId: string, data: {
   categoryId?: string;
+  goalId?: string | null;
   type: string;
   description: string;
   amount: number;
   date: string;
 }) {
+  // Aporte: so despesa pode ser vinculada a uma meta
+  const goalId = data.type === "EXPENSE" ? data.goalId ?? null : null;
+  if (goalId) {
+    await garanteMetaDoUsuario(userId, goalId);
+  }
+
   let categoryId = data.categoryId;
 
   if (!categoryId) {
-    const nomeCategoria = classificarCategoria(data.description);
+    // Investimentos tem categoria propria e dedicada; demais tipos usam o classificador por palavra-chave
+    const nomeCategoria =
+      data.type === "INVESTMENT" ? "Investimentos" : classificarCategoria(data.description);
 
     if (nomeCategoria) {
-      const categoria = await prisma.category.findUnique({
-        where: { name: nomeCategoria },
+      const categoria = await prisma.category.findFirst({
+        where: { name: nomeCategoria, userId: null },
       });
 
       if (categoria) {
@@ -88,8 +133,8 @@ async function create(userId: string, data: {
     }
 
     if (!categoryId) {
-      const outros = await prisma.category.findUnique({
-        where: { name: "Outros" },
+      const outros = await prisma.category.findFirst({
+        where: { name: "Outros", userId: null },
       });
 
       if (outros) {
@@ -102,23 +147,45 @@ async function create(userId: string, data: {
     throw new Error("Categoria nao encontrada");
   }
 
-  const transacao = await prisma.transaction.create({
-    data: {
-      userId,
-      categoryId,
-      type: data.type as any,
-      description: data.description,
-      amount: data.amount,
-      date: new Date(data.date),
-    },
-    include: { category: true },
+  const transacao = await prisma.$transaction(async (tx) => {
+    const criada = await tx.transaction.create({
+      data: {
+        userId,
+        categoryId,
+        goalId,
+        type: data.type as any,
+        description: data.description,
+        amount: data.amount,
+        date: new Date(data.date),
+      },
+      include: { category: true, goal: { select: { id: true, name: true } } },
+    });
+
+    // Aporte alimenta o valor economizado da meta
+    if (goalId) {
+      await tx.goal.update({
+        where: { id: goalId },
+        data: { savedAmount: { increment: data.amount } },
+      });
+    }
+
+    return criada;
   });
 
   return transacao;
 }
 
+// Ajusta o valor economizado de uma meta por um delta, sem deixar ficar negativo.
+async function ajustaSaved(tx: any, goalId: string, delta: number) {
+  const meta = await tx.goal.findUnique({ where: { id: goalId } });
+  if (!meta) return;
+  const novo = Math.max(0, Number(meta.savedAmount) + delta);
+  await tx.goal.update({ where: { id: goalId }, data: { savedAmount: novo } });
+}
+
 async function update(userId: string, id: string, data: {
   categoryId?: string;
+  goalId?: string | null;
   type?: string;
   description?: string;
   amount?: number;
@@ -132,7 +199,26 @@ async function update(userId: string, id: string, data: {
     throw new Error("Transacao nao encontrada");
   }
 
-  const updateData: any = {};
+  const oldGoalId = transacao.goalId;
+  const oldAmount = Number(transacao.amount);
+  const newType = data.type ?? transacao.type;
+  const newAmount = data.amount ?? oldAmount;
+
+  // Vinculo de meta so vale para despesa; mudar para receita desfaz o aporte
+  let newGoalId: string | null;
+  if (newType !== "EXPENSE") {
+    newGoalId = null;
+  } else if (data.goalId !== undefined) {
+    newGoalId = data.goalId;
+  } else {
+    newGoalId = oldGoalId;
+  }
+
+  if (newGoalId) {
+    await garanteMetaDoUsuario(userId, newGoalId);
+  }
+
+  const updateData: any = { goalId: newGoalId };
 
   if (data.categoryId) updateData.categoryId = data.categoryId;
   if (data.type) updateData.type = data.type;
@@ -140,10 +226,15 @@ async function update(userId: string, id: string, data: {
   if (data.amount) updateData.amount = data.amount;
   if (data.date) updateData.date = new Date(data.date);
 
-  const atualizada = await prisma.transaction.update({
-    where: { id },
-    data: updateData,
-    include: { category: true },
+  const atualizada = await prisma.$transaction(async (tx) => {
+    if (oldGoalId) await ajustaSaved(tx, oldGoalId, -oldAmount);
+    if (newGoalId) await ajustaSaved(tx, newGoalId, newAmount);
+
+    return tx.transaction.update({
+      where: { id },
+      data: updateData,
+      include: { category: true, goal: { select: { id: true, name: true } } },
+    });
   });
 
   return atualizada;
@@ -158,8 +249,13 @@ async function remove(userId: string, id: string) {
     throw new Error("Transacao nao encontrada");
   }
 
-  await prisma.transaction.delete({
-    where: { id },
+  const goalId = transacao.goalId;
+  const valor = Number(transacao.amount);
+
+  await prisma.$transaction(async (tx) => {
+    // Remover um aporte reduz o valor economizado da meta
+    if (goalId) await ajustaSaved(tx, goalId, -valor);
+    await tx.transaction.delete({ where: { id } });
   });
 }
 

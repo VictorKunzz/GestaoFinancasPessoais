@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
-
-const JWT_SECRET = process.env.JWT_SECRET || "chave-secreta-padrao";
+import { env } from "../config/env";
 
 function authMiddleware(req: Request, res: Response, next: NextFunction) {
   const authHeader = req.headers.authorization;
@@ -18,12 +17,12 @@ function authMiddleware(req: Request, res: Response, next: NextFunction) {
     return;
   }
 
-  const token = parts[1];
+  const token = parts[1] as string;
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET as string) as unknown as { userId: string };
+    const decoded = jwt.verify(token, env.JWT_SECRET) as unknown as { userId: string };
 
-    (req as any).userId = decoded.userId;
+    req.userId = decoded.userId;
 
     next();
   } catch (error) {

@@ -1,28 +1,31 @@
 import prisma from "../utils/prisma";
 
-async function getAll() {
+// Categorias visiveis ao usuario: as proprias + as padrao do sistema (userId null)
+async function getAll(userId: string) {
   const categorias = await prisma.category.findMany({
-    orderBy: { name: "asc" },
+    where: { OR: [{ userId }, { isDefault: true }] },
+    orderBy: [{ isDefault: "desc" }, { name: "asc" }],
   });
 
   return categorias;
 }
 
-async function getById(id: string) {
+async function getById(userId: string, id: string) {
   const categoria = await prisma.category.findUnique({
     where: { id },
   });
 
-  if (!categoria) {
+  // padrao (visivel a todos) ou pertencente ao usuario
+  if (!categoria || (!categoria.isDefault && categoria.userId !== userId)) {
     throw new Error("Categoria nao encontrada");
   }
 
   return categoria;
 }
 
-async function create(name: string, icon?: string) {
-  const existe = await prisma.category.findUnique({
-    where: { name },
+async function create(userId: string, name: string, icon?: string) {
+  const existe = await prisma.category.findFirst({
+    where: { name, userId },
   });
 
   if (existe) {
@@ -34,13 +37,14 @@ async function create(name: string, icon?: string) {
       name,
       icon: icon || null,
       isDefault: false,
+      userId,
     },
   });
 
   return categoria;
 }
 
-async function update(id: string, data: { name?: string; icon?: string }) {
+async function update(userId: string, id: string, data: { name?: string; icon?: string }) {
   const categoria = await prisma.category.findUnique({
     where: { id },
   });
@@ -53,9 +57,13 @@ async function update(id: string, data: { name?: string; icon?: string }) {
     throw new Error("Categorias padrao nao podem ser editadas");
   }
 
-  if (data.name) {
-    const existe = await prisma.category.findUnique({
-      where: { name: data.name },
+  if (categoria.userId !== userId) {
+    throw new Error("Categoria nao encontrada");
+  }
+
+  if (data.name && data.name !== categoria.name) {
+    const existe = await prisma.category.findFirst({
+      where: { name: data.name, userId },
     });
 
     if (existe && existe.id !== id) {
@@ -71,7 +79,7 @@ async function update(id: string, data: { name?: string; icon?: string }) {
   return atualizada;
 }
 
-async function remove(id: string) {
+async function remove(userId: string, id: string) {
   const categoria = await prisma.category.findUnique({
     where: { id },
   });
@@ -82,6 +90,16 @@ async function remove(id: string) {
 
   if (categoria.isDefault) {
     throw new Error("Categorias padrao nao podem ser removidas");
+  }
+
+  if (categoria.userId !== userId) {
+    throw new Error("Categoria nao encontrada");
+  }
+
+  const emUso = await prisma.transaction.count({ where: { categoryId: id } });
+
+  if (emUso > 0) {
+    throw new Error("Categoria em uso por transacoes e nao pode ser removida");
   }
 
   await prisma.category.delete({

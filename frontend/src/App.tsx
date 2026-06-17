@@ -4,6 +4,7 @@ import { ToastProvider } from './contexts/ToastContext';
 import ToastContainer from './components/ui/ToastContainer';
 import AppLayout from './components/layout/AppLayout';
 import PrivateRoute from './components/layout/PrivateRoute';
+import AdminRoute from './components/layout/AdminRoute';
 
 // Páginas
 import LoginPage from './pages/LoginPage';
@@ -12,6 +13,10 @@ import DashboardPage from './pages/DashboardPage';
 import TransactionsPage from './pages/TransactionsPage';
 import GoalsPage from './pages/GoalsPage';
 import BadgesPage from './pages/BadgesPage';
+import CategoriesPage from './pages/CategoriesPage';
+import BudgetsPage from './pages/BudgetsPage';
+import AdminUsersPage from './pages/AdminUsersPage';
+import AdminBadgesPage from './pages/AdminBadgesPage';
 
 export default function App() {
   return (
@@ -34,7 +39,25 @@ export default function App() {
               <Route path="/" element={<DashboardPage />} />
               <Route path="/transactions" element={<TransactionsPage />} />
               <Route path="/goals" element={<GoalsPage />} />
+              <Route path="/categories" element={<CategoriesPage />} />
+              <Route path="/budgets" element={<BudgetsPage />} />
               <Route path="/badges" element={<BadgesPage />} />
+              <Route
+                path="/admin/users"
+                element={
+                  <AdminRoute>
+                    <AdminUsersPage />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path="/admin/badges"
+                element={
+                  <AdminRoute>
+                    <AdminBadgesPage />
+                  </AdminRoute>
+                }
+              />
             </Route>
 
             {/* Fallback */}

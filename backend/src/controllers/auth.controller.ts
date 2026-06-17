@@ -54,7 +54,7 @@ async function login(req: Request, res: Response) {
 
 async function me(req: Request, res: Response) {
   try {
-    const userId = (req as any).userId;
+    const userId = req.userId;
 
     const usuario = await authService.getProfile(userId);
 

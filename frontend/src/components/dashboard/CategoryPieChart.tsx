@@ -1,5 +1,6 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import type { InsightCategory } from '../../types';
+import { formatCurrency } from '../../lib/format';
 import Card from '../ui/Card';
 
 interface CategoryPieChartProps {
@@ -8,10 +9,6 @@ interface CategoryPieChartProps {
 }
 
 const COLORS = ['#8b5cf6', '#10b981', '#f43f5e', '#3b82f6', '#f59e0b', '#ec4899', '#14b8a6', '#f97316'];
-
-function formatCurrency(value: number): string {
-  return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-}
 
 export default function CategoryPieChart({ categorias, totalGasto }: CategoryPieChartProps) {
   if (categorias.length === 0) {
@@ -53,7 +50,7 @@ export default function CategoryPieChart({ categorias, totalGasto }: CategoryPie
                 ))}
               </Pie>
               <Tooltip
-                formatter={(value: number) => formatCurrency(value)}
+                formatter={(value) => formatCurrency(Number(value))}
                 contentStyle={{
                   background: '#1a1a3e',
                   border: '1px solid rgba(255,255,255,0.08)',

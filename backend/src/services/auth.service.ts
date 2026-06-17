@@ -1,8 +1,7 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import prisma from "../utils/prisma";
-
-const JWT_SECRET = process.env.JWT_SECRET || "chave-secreta-padrao";
+import { env } from "../config/env";
 
 async function register(name: string, email: string, password: string) {
 
@@ -31,6 +30,7 @@ async function register(name: string, email: string, password: string) {
     id: usuario.id,
     name: usuario.name,
     email: usuario.email,
+    role: usuario.role,
     createdAt: usuario.createdAt,
   };
 }
@@ -52,7 +52,7 @@ async function login(email: string, password: string) {
     throw new Error("Email ou senha incorretos");
   }
 
-  const token = jwt.sign({ userId: usuario.id }, JWT_SECRET, {
+  const token = jwt.sign({ userId: usuario.id }, env.JWT_SECRET, {
     expiresIn: "7d",
   });
 
@@ -62,6 +62,7 @@ async function login(email: string, password: string) {
       id: usuario.id,
       name: usuario.name,
       email: usuario.email,
+      role: usuario.role,
     },
   };
 }
@@ -80,6 +81,7 @@ async function getProfile(userId: string) {
     id: usuario.id,
     name: usuario.name,
     email: usuario.email,
+    role: usuario.role,
     createdAt: usuario.createdAt,
   };
 }

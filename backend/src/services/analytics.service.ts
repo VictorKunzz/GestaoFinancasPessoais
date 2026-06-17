@@ -5,9 +5,11 @@ async function getHealthScore(userId: string) {
   const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
   const fimMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
 
+  // goalId: null exclui aportes de meta — eles contam como economia, nao despesa
   const transacoesMes = await prisma.transaction.findMany({
     where: {
       userId,
+      goalId: null,
       date: {
         gte: inicioMes,
         lte: fimMes,
@@ -17,29 +19,34 @@ async function getHealthScore(userId: string) {
 
   let totalReceitas = 0;
   let totalDespesas = 0;
+  let totalInvestimentos = 0;
 
   transacoesMes.forEach((t) => {
     const valor = Number(t.amount);
     if (t.type === "INCOME") {
       totalReceitas += valor;
-    } else {
+    } else if (t.type === "INVESTMENT") {
+      totalInvestimentos += valor;
+    } else if (t.type === "EXPENSE") {
       totalDespesas += valor;
     }
   });
 
-  if (totalReceitas === 0 && totalDespesas === 0) {
+  if (totalReceitas === 0 && totalDespesas === 0 && totalInvestimentos === 0) {
     return {
       score: 50,
       nivel: "Neutro",
       totalReceitas: 0,
       totalDespesas: 0,
+      totalInvestimentos: 0,
       saldo: 0,
       percentualGasto: 0,
       mensagem: "Sem transações neste mês. Comece registrando suas receitas e despesas!",
     };
   }
 
-  const saldo = totalReceitas - totalDespesas;
+  // Investimentos reduzem o saldo disponivel (dinheiro alocado), mas nao penalizam o score de gastos
+  const saldo = totalReceitas - totalDespesas - totalInvestimentos;
   const percentualGasto = totalReceitas > 0 ? (totalDespesas / totalReceitas) * 100 : 100;
 
   let score = 0;
@@ -89,6 +96,7 @@ async function getHealthScore(userId: string) {
     nivel,
     totalReceitas,
     totalDespesas,
+    totalInvestimentos,
     saldo,
     percentualGasto: Math.round(percentualGasto),
     mensagem,
@@ -104,6 +112,7 @@ async function getInsights(userId: string) {
     where: {
       userId,
       type: "EXPENSE",
+      goalId: null,
       date: {
         gte: inicioMes,
         lte: fimMes,
@@ -143,8 +152,8 @@ async function getInsights(userId: string) {
 
   const dicas: string[] = [];
 
-  if (categoriasComPercentual.length > 0) {
-    const maiorGasto = categoriasComPercentual[0];
+  const maiorGasto = categoriasComPercentual[0];
+  if (maiorGasto) {
     dicas.push(`Sua maior categoria de gasto é "${maiorGasto.nome}" com ${maiorGasto.percentual}% do total.`);
   }
 
@@ -172,6 +181,7 @@ async function getBalanceForecast(userId: string) {
   const transacoes = await prisma.transaction.findMany({
     where: {
       userId,
+      goalId: null,
       date: {
         gte: tresMesesAtras,
         lte: hoje,
@@ -183,6 +193,7 @@ async function getBalanceForecast(userId: string) {
     return {
       previsaoReceita: 0,
       previsaoDespesa: 0,
+      previsaoInvestimento: 0,
       previsaoSaldo: 0,
       mensagem: "Sem dados suficientes para fazer uma previsão. Continue registrando!",
     };
@@ -190,12 +201,15 @@ async function getBalanceForecast(userId: string) {
 
   let totalReceitas = 0;
   let totalDespesas = 0;
+  let totalInvestimentos = 0;
 
   transacoes.forEach((t) => {
     const valor = Number(t.amount);
     if (t.type === "INCOME") {
       totalReceitas += valor;
-    } else {
+    } else if (t.type === "INVESTMENT") {
+      totalInvestimentos += valor;
+    } else if (t.type === "EXPENSE") {
       totalDespesas += valor;
     }
   });
@@ -203,7 +217,9 @@ async function getBalanceForecast(userId: string) {
   const mesesComDados = 3;
   const mediaReceita = totalReceitas / mesesComDados;
   const mediaDespesa = totalDespesas / mesesComDados;
-  const mediaSaldo = mediaReceita - mediaDespesa;
+  const mediaInvestimento = totalInvestimentos / mesesComDados;
+  // Investimentos sao deduzidos do saldo previsto (dinheiro que sai do disponivel)
+  const mediaSaldo = mediaReceita - mediaDespesa - mediaInvestimento;
 
   let mensagem = "";
 
@@ -218,9 +234,111 @@ async function getBalanceForecast(userId: string) {
   return {
     previsaoReceita: Math.round(mediaReceita * 100) / 100,
     previsaoDespesa: Math.round(mediaDespesa * 100) / 100,
+    previsaoInvestimento: Math.round(mediaInvestimento * 100) / 100,
     previsaoSaldo: Math.round(mediaSaldo * 100) / 100,
     mensagem,
   };
 }
 
-export default { getHealthScore, getInsights, getBalanceForecast };
+const MESES_CURTOS = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+
+// Serie mensal (ultimos N meses) de receitas, despesas e saldo — alimenta o grafico de fluxo de caixa.
+async function getCashflow(userId: string, meses = 6) {
+  const hoje = new Date();
+  const inicio = new Date(hoje.getFullYear(), hoje.getMonth() - (meses - 1), 1);
+  const fim = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0, 23, 59, 59);
+
+  const transacoes = await prisma.transaction.findMany({
+    where: { userId, goalId: null, date: { gte: inicio, lte: fim } },
+    select: { type: true, amount: true, date: true },
+  });
+
+  const buckets: Record<string, { receitas: number; despesas: number; investimentos: number }> = {};
+  for (let i = 0; i < meses; i++) {
+    const d = new Date(hoje.getFullYear(), hoje.getMonth() - (meses - 1) + i, 1);
+    const chave = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    buckets[chave] = { receitas: 0, despesas: 0, investimentos: 0 };
+  }
+
+  transacoes.forEach((t) => {
+    const d = new Date(t.date);
+    const chave = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    const bucket = buckets[chave];
+    if (!bucket) return;
+    const valor = Number(t.amount);
+    if (t.type === "INCOME") {
+      bucket.receitas += valor;
+    } else if (t.type === "INVESTMENT") {
+      bucket.investimentos += valor;
+    } else if (t.type === "EXPENSE") {
+      bucket.despesas += valor;
+    }
+  });
+
+  const serie = Object.entries(buckets).map(([chave, v]) => {
+    const mesIndex = Number(chave.split("-")[1]) - 1;
+    return {
+      mes: chave,
+      label: MESES_CURTOS[mesIndex] ?? chave,
+      receitas: Math.round(v.receitas * 100) / 100,
+      despesas: Math.round(v.despesas * 100) / 100,
+      investimentos: Math.round(v.investimentos * 100) / 100,
+      saldo: Math.round((v.receitas - v.despesas - v.investimentos) * 100) / 100,
+    };
+  });
+
+  return { meses: serie };
+}
+
+// Comparativo do mes atual vs. media dos 3 meses anteriores (RF08).
+async function getMonthlyComparison(userId: string) {
+  const hoje = new Date();
+  const inicioMesAtual = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+  const fimMesAtual = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0, 23, 59, 59);
+  const inicioAnteriores = new Date(hoje.getFullYear(), hoje.getMonth() - 3, 1);
+  const fimAnteriores = new Date(hoje.getFullYear(), hoje.getMonth(), 0, 23, 59, 59);
+
+  const [despesasMes, despesasAnteriores] = await Promise.all([
+    prisma.transaction.aggregate({
+      _sum: { amount: true },
+      where: { userId, type: "EXPENSE", goalId: null, date: { gte: inicioMesAtual, lte: fimMesAtual } },
+    }),
+    prisma.transaction.aggregate({
+      _sum: { amount: true },
+      where: { userId, type: "EXPENSE", goalId: null, date: { gte: inicioAnteriores, lte: fimAnteriores } },
+    }),
+  ]);
+
+  const gastoMesAtual = Number(despesasMes._sum.amount ?? 0);
+  const mediaAnterior = Number(despesasAnteriores._sum.amount ?? 0) / 3;
+
+  let variacaoPercentual = 0;
+  if (mediaAnterior > 0) {
+    variacaoPercentual = Math.round(((gastoMesAtual - mediaAnterior) / mediaAnterior) * 100);
+  }
+
+  let tendencia: "alta" | "baixa" | "estavel" = "estavel";
+  let mensagem = "";
+
+  if (mediaAnterior === 0) {
+    mensagem = "Ainda nao ha historico suficiente para comparar seus gastos.";
+  } else if (variacaoPercentual > 5) {
+    tendencia = "alta";
+    mensagem = `Voce gastou ${variacaoPercentual}% a mais que a sua media dos ultimos 3 meses.`;
+  } else if (variacaoPercentual < -5) {
+    tendencia = "baixa";
+    mensagem = `Parabens! Voce gastou ${Math.abs(variacaoPercentual)}% a menos que a sua media dos ultimos 3 meses.`;
+  } else {
+    mensagem = "Seus gastos estao em linha com a media dos ultimos 3 meses.";
+  }
+
+  return {
+    gastoMesAtual: Math.round(gastoMesAtual * 100) / 100,
+    mediaAnterior: Math.round(mediaAnterior * 100) / 100,
+    variacaoPercentual,
+    tendencia,
+    mensagem,
+  };
+}
+
+export default { getHealthScore, getInsights, getBalanceForecast, getCashflow, getMonthlyComparison };
