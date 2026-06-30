@@ -26,7 +26,7 @@ Authorization: Bearer <seu-token-jwt>
 
 ## 3. Transações (`/api/transactions`)
 * `GET /api/transactions` - Retorna a lista de transações com suporte a query params (`?month=`, `?year=`, `?type=`, etc).
-* `POST /api/transactions` - Cria uma transação: `{ categoryId, type, description, amount, date }`.
+* `POST /api/transactions` - Cria uma transação: `{ categoryId, type, description, amount, date }`. O campo `type` aceita `INCOME` (receita), `EXPENSE` (despesa) ou `INVESTMENT` (investimento).
 * `GET /api/transactions/:id` - Busca os detalhes de uma transação pelo ID.
 * `PUT /api/transactions/:id` - Edita os dados de uma transação.
 * `DELETE /api/transactions/:id` - Remove a transação do sistema.
@@ -49,3 +49,22 @@ Rotas específicas para alimentar a página de dashboard e inteligência da apli
 * `GET /api/badges/user` - Lista todas as medalhas que o usuário possui.
 * `GET /api/badges/available` - Lista sistema de medalhas geral.
 * `POST /api/badges/check` (ou acionamentos internos via hooks) - Verifica se o usuário ganhou alguma medalha nova baseada em ações recentes.
+
+## 7. Orçamentos (`/api/budgets`)
+* `GET /api/budgets` - Lista os orçamentos (limites mensais por categoria) do usuário.
+* `POST /api/budgets` - Cria um orçamento mensal para uma categoria.
+* `PUT /api/budgets/:id` - Atualiza um orçamento existente.
+* `DELETE /api/budgets/:id` - Remove um orçamento.
+
+## 8. Administração (`/api/admin`)
+Rotas restritas a usuários com papel `ADMIN` (exigem autenticação + middleware de admin).
+* `GET /api/admin/users` - Lista todos os usuários do sistema.
+* `PUT /api/admin/users/:id/role` - Altera o papel de um usuário (ex.: promover a `ADMIN`).
+* `DELETE /api/admin/users/:id` - Remove um usuário.
+* `GET /api/admin/badges` - Lista o catálogo de medalhas.
+* `POST /api/admin/badges` - Cria uma nova medalha.
+* `PUT /api/admin/badges/:id` - Edita uma medalha.
+* `DELETE /api/admin/badges/:id` - Remove uma medalha.
+
+## 9. Health Check (`/api/health`)
+* `GET /api/health` - Rota pública que retorna o status da API (`status`, `timestamp`, `uptime`). Útil para monitoramento e para validar que o servidor está no ar.

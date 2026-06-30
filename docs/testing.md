@@ -7,7 +7,7 @@ O script foi programado de forma dinâmica: Cada execução cria um novo e-mail 
 
 ## Pré-requisitos da Apresentação
 Para que os testes funcionem, apenas três coisas devem estar garantidas no seu computador:
-1. O Serviço do Banco PostgreSQL rodando no em segundo plano (seja via Docker ou nativo).
+1. O serviço do banco PostgreSQL rodando em segundo plano (seja via Docker ou nativo).
 2. O banco já deve estar "populado" com os metadados iniciais (já criados pelas migrations e seed).
 3. E por último: **A sua API deve estar ligada.** Mantenha um terminal aberto na pasta `backend/` executando:
    ```bash
@@ -25,7 +25,7 @@ Para que os testes funcionem, apenas três coisas devem estar garantidas no seu 
    npx ts-node test-all.ts
    ```
 
-4. Acompanhe os checmarks verdes ✅. O script navegará validando:
+4. Acompanhe os checkmarks verdes ✅. O script navegará validando:
    - Cadastros e logins retornando JWT Válidos.
    - Detecção se ao gastar dinheiro no "McDonalds" ele vai para categoria "Alimentação".
    - Detecção matemática do Motor de Saúde Financeira.

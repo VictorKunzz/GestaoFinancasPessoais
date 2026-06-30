@@ -16,7 +16,8 @@ Abaixo um resumo das responsabilidades de cada entidade mapeada no diagrama acim
 
 - **User**: Armazena os dados de autenticação (com hash de senha bcrypt) e perfil. Atua como o núcleo de posse de dados, ligando-se com transações, metas e medalhas conquistadas em relacionamentos `1:N`.
 - **Category**: Categorias utilizadas para classificar as transações financeiras. Possui campos para ícones e a flag `isDefault` para separar as globais do sistema das customizadas pelo usuário.
-- **Transaction**: Registra todas as movimentações financeiras. O campo Enum `TransactionType` classifica o registro entre `INCOME` (Receita) ou `EXPENSE` (Despesa). Relaciona-se diretamente via FK com `User` e `Category`.
+- **Transaction**: Registra todas as movimentações financeiras. O campo Enum `TransactionType` classifica o registro entre `INCOME` (Receita), `EXPENSE` (Despesa) ou `INVESTMENT` (Investimento). Relaciona-se diretamente via FK com `User` e `Category`.
 - **Goal**: Armazena as metas e objetivos financeiros definidos, acompanhando o valor alvo (`targetAmount`) vs o valor economizado no momento (`savedAmount`), além da data limite (`deadline`).
+- **Budget**: Limites mensais de gasto definidos por categoria. Vincula-se a `User` e `Category` e serve de base para os alertas de orçamento.
 - **Badge**: Medalhas e conquistas disponíveis pela plataforma (ex: "Criou a primeira meta"). Possui um código em `condition` que o back-end avalia.
 - **UserBadge**: Entidade associativa que resolve o relacionamento N:M entre Usuários e Medalhas, armazenando quando exatamente o usuário desbloqueou a conquista (`earnedAt`).
